@@ -1,5 +1,5 @@
 Hooks.once("dragRuler.ready", () => {
-	dragRuler.registerModule("pf2e-bleedingsky-data", speedProvider)
+	dragRuler.registerModule("pf2e-dragruler", speedProvider)
 })
 
 const speedProvider = function mySpeedProvider(token, playerColor) {
