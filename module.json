@@ -11,6 +11,12 @@
     "systems": ["pf2e"],
     "compatibleCoreVersion": "0.7.9",
     "minimumCoreVersion": "0.7.5",
+    "dependencies": [
+    {
+      "name": "drag-ruler",
+      "type": "module",
+      "manifest": "https://raw.githubusercontent.com/manuelVo/foundryvtt-drag-ruler/master/module.json"
+    }],
     "manifest": "https://raw.githubusercontent.com/velara/pf2edragruler/master/module.json",
     "download": "https://github.com/velara/pf2edragruler/archive/v0.22.zip",
     "url": "https://github.com/Velara/pf2edragruler/"
