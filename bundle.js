@@ -8,6 +8,7 @@ const items = token.actor.data.items.filter(item => item.type === 'condition' &&
 const conditions = PF2eConditionManager.getFlattenedConditions(items);
 //window.conditionsVEL = PF2eConditionManager.getFlattenedConditions(items);
 
+
 let numactions = 3;
 for (var i=0, len=conditions.length; i<len; i++) {
 	if(conditions[i].name.includes("Quickened") && conditions[i].active === true){
@@ -22,28 +23,28 @@ for (var i=0, len=conditions.length; i<len; i++) {
 if (numactions < 0) {numactions = 0};
 
 if (type === "character") {
-		var baseSpeed = token.actor.data.data.attributes.speed.total;
+		var baseSpeed = parseInt(token.actor.data.data.attributes.speed.total);
 		if (numactions === 0){baseSpeed = 5};
-		const ranges = [{range: baseSpeed, color: playerColor},{range: baseSpeed * 2, color: 0xFFFF00}, { range: baseSpeed * 3, color: 0xff8000 },{range: baseSpeed * 4, color: 0x008080}];
+		const ranges = [{range: baseSpeed, color: 0x3222C7},{range: baseSpeed * 2, color:  0xFFEC07}, { range: baseSpeed * 3, color: 0xC033E0  },{range: baseSpeed * 4, color: 0x1BCAD8}];
 		for (var i = numactions, len=ranges.length; i<len; i++){
 			ranges.pop();
 		};
 		if (numactions === 0){
 			baseSpeed = 0;
-			ranges.push({range: baseSpeed, color: playerColor});
+			ranges.push({range: baseSpeed, color: 0x3222C7});
 		};
 		return ranges;
 
 	} else {
-		var baseSpeed = token.actor.data.data.attributes.speed.value;
+		var baseSpeed = parseInt(token.actor.data.data.attributes.speed.value);
 		if (numactions === 0){baseSpeed = 5};
-		const ranges = [{range: baseSpeed, color: playerColor},{range: baseSpeed * 2, color: 0xFFFF00}, { range: baseSpeed * 3, color: 0xff8000 },{range: baseSpeed * 4, color: 0x008080}];
+		const ranges = [{range: baseSpeed, color: 0x3222C7},{range: baseSpeed * 2, color: 0xFFEC07}, { range: baseSpeed * 3, color: 0xC033E0 },{range: baseSpeed * 4, color: 0x1BCAD8}];
 		for (var i = numactions, len=ranges.length; i<len; i++){
 			ranges.pop();
 		};
 		if (numactions === 0){
 			baseSpeed = 0;
-			ranges.push({range: baseSpeed, color: playerColor});
+			ranges.push({range: baseSpeed, color: 0x3222C7});
 		};
 		return ranges;
 	}
