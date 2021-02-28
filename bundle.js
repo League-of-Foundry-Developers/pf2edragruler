@@ -36,7 +36,7 @@ Hooks.once("dragRuler.ready", (SpeedProvider) => {
 			}
 
 			if (numactions < 0) {numactions = 0};
-			window.vel3 = numactions
+			//window.vel3 = numactions
 
 			if (numactions === 0){baseSpeed = 5};
 				const ranges = [{range: baseSpeed, color: "FirstAction"},{range: baseSpeed * 2, color: "SecondAction"}, { range: baseSpeed * 3, color: "ThirdAction" },{range: baseSpeed * 4, color: "FourthAction"}];
@@ -77,13 +77,16 @@ var land = 0; var fly = 0; var swim = 0; var climb = 0; var burrow = 0; var misc
 		} else{var miscSpeed = parseFloat(token.actor.data.data.attributes.speed.total)};
 
 		if (land === 0 && token.actor.data.data.attributes.speed.value !== undefined) {
-			var miscSpeed = parseFloat(token.actor.data.data.attributes.speed.value.match(/\d+/));
+		var miscSpeed = 0;
+			if (token.actor.data.data.attributes.speed.value !== null && token.actor.data.data.attributes.speed.value !== undefined){
+				var miscSpeed = parseFloat(token.actor.data.data.attributes.speed.value.match(/\d+/));
+			}
 		};
 
 	} else if (token.actor.data.type === "familiar"){
 
 		const cleanedSpeeds = speedsSorter(token)
-		window.vel2 = cleanedSpeeds
+		//window.vel2 = cleanedSpeeds
 		var land = cleanedSpeeds.land; var fly = cleanedSpeeds.fly; var swim = cleanedSpeeds.swim; var climb = cleanedSpeeds.swim; var burrow = cleanedSpeeds.burrow; var miscSpeed =cleanedSpeeds.misc;
 
 
@@ -98,7 +101,7 @@ var land = 0; var fly = 0; var swim = 0; var climb = 0; var burrow = 0; var misc
 	if (swim > 0) {speeds.push({id: "swim", value: swim})};
 	if (burrow > 0) {speeds.push({id: "burrow", value: burrow})};
 	if (climb > 0) {speeds.push({id: "climb", value: climb})};
-	if (speeds === undefined) {speeds.push({id: "land", value: 0})};
+	if (speeds.length === 0) {speeds.push({id: "land", value: 0})};
 
 	return speeds
 }
