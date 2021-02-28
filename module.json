@@ -2,7 +2,7 @@
     "name": "pf2e-dragruler",
     "title": "PF2E Drag Ruler Integration",
     "description": "Integration of Drag Ruler module (https://github.com/manuelVo/foundryvtt-drag-ruler) for Pathfinder 2e with support for the 3 action enconomy, and quickened, slowed and stunned conditions.",
-    "version": "0.3.1",
+    "version": "0.3.2",
     "author": "Velara [Avery#9136]",
     "packs": [],
     "esmodules": ["./bundle.js"],
@@ -18,6 +18,6 @@
       "manifest": "https://raw.githubusercontent.com/manuelVo/foundryvtt-drag-ruler/master/module.json"
     }],
     "manifest": "https://raw.githubusercontent.com/velara/pf2edragruler/master/module.json",
-    "download": "https://github.com/velara/pf2edragruler/archive/v0.3.1.zip",
+    "download": "https://github.com/velara/pf2edragruler/archive/v0.3.2.zip",
     "url": "https://github.com/Velara/pf2edragruler/"
 }
