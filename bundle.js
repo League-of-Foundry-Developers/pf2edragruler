@@ -1,3 +1,19 @@
+const settingsKey = "pf2e-dragruler";
+function registerSettings() {
+	game.settings.register(settingsKey, "elevation", {
+		name: "Elevation Settings",
+		hint: "If enabled, positive elevations will automatically use fly speed, and negative elevations will use burrow, if an actor does not have that speed, will use their land speed. If disabled elevation will not effect which speed is used.",
+		scope: "world",
+		config: true,
+		type: Boolean,
+		default: true
+})
+};
+
+Hooks.once("init", () => {
+	registerSettings();
+});
+
 Hooks.once("dragRuler.ready", (SpeedProvider) => {
 // When dragruler is ready to go give it all the PF2 specific stuff
 	class PF2ESpeedProvider extends SpeedProvider {
@@ -19,7 +35,8 @@ Hooks.once("dragRuler.ready", (SpeedProvider) => {
 			const conditions = game.pf2e.ConditionManager.getFlattenedConditions(items); //Converts the condition list into a state that's easier to use.
 			let numactions = 3; //Sets the default number of actions (3) which can then be modified depending on the conditions.
 
-			//This logic gate handles flight.
+			//This logic gate handles flight and burrowing, if the elevation setting is on.
+		if (game.settings.get("pf2e-dragruler", "elevation")=== true) {
 			if(tokenElevation > 0) {
 				// If a token is elevated steps through all the speeds looking for the fly speed.
 				for(var i=0, len= tokenSpeed.length; i<len; i++){
@@ -28,7 +45,25 @@ Hooks.once("dragRuler.ready", (SpeedProvider) => {
 			 	}
 				//If a creature has no fly speed, instead uses the first speed, based on the order: land, fly, misc, swim, burrow, climb
 				if (baseSpeed === undefined) {var baseSpeed = parseFloat(tokenSpeed[0].value)}
-			}else if (tokenElevation <= 0){var baseSpeed = parseFloat(tokenSpeed[0].value)} // If the token isn't elevated, just assigns the default speed to the first speed.
+			}else if (tokenElevation < 0){
+				for(var i=0, len= tokenSpeed.length; i<len; i++){
+					// When we find the fly speed sets it as the value for the default.
+					if (tokenSpeed[i].id === 'burrow') {var baseSpeed = parseFloat(tokenSpeed[i].value)}
+			 	}
+				//If a creature has no fly speed, instead uses the first speed, based on the order: land, fly, misc, swim, burrow, climb
+				if (baseSpeed === undefined) {var baseSpeed = parseFloat(tokenSpeed[0].value)}
+			}else if (tokenElevation === 0){var baseSpeed = parseFloat(tokenSpeed[0].value)} // If the token isn't elevated, just assigns the default speed to the first speed.
+		}
+		var flagsExist = false;
+		if(token.actor.data.flags !== undefined){if(token.actor.data.flags.pf2e !==undefined){if(token.actor.data.flags.pf2e.movement!==undefined){var flagsExist=true}}};
+		if(flagsExist === true){
+			for(var i=tokenSpeed.length-1; i>=0; i--){
+				if(tokenSpeed[i].id === 'burrow' && token.actor.data.flags.pf2e.movement.burrowing !== undefined && token.actor.data.flags.pf2e.movement.burrowing !== false){var baseSpeed = parseFloat(tokenSpeed[i].value)}
+				else if(tokenSpeed[i].id === 'climb' && token.actor.data.flags.pf2e.movement.climbing !== undefined && token.actor.data.flags.pf2e.movement.climbing !== false){var baseSpeed = parseFloat(tokenSpeed[i].value)}
+				else if(tokenSpeed[i].id === 'swim' && token.actor.data.flags.pf2e.movement.swimming !== undefined && token.actor.data.flags.pf2e.movement.swimming !== false){var baseSpeed = parseFloat(tokenSpeed[i].value)}
+				else if(tokenSpeed[i].id === 'fly' && token.actor.data.flags.pf2e.movement.flying !== undefined && token.actor.data.flags.pf2e.movement.flying !== false){var baseSpeed = parseFloat(tokenSpeed[i].value)}
+			}
+		}
 
 			//This loop handles all changes to number of actions from conditions.
 			for (var i=0, len=conditions.length; i<len; i++) {
@@ -68,7 +103,40 @@ Hooks.once("dragRuler.ready", (SpeedProvider) => {
 				}; //Since ranges is empty if you've got no actions which throws an error, add a range for the first action of 0.
 					return ranges;
 			}
+
+		getCostForStep(token, area, ignoreDifficultTerrain){
+			var ignoreTerrain = 0;
+			var flagsExist = false;
+			const tokenElevation = token.data.elevation;
+
+			if(token.actor.data.flags !== undefined){if(token.actor.data.flags.pf2e !==undefined){if(token.actor.data.flags.pf2e.movement!==undefined){var flagsExist=true}}};
+
+		if(flagsExist === true){
+			if(token.actor.data.flags.pf2e.movement.ignoreTerrain !== undefined) {
+				const ignoreDifficultTerrain = token.actor.data.flags.pf2e.movement.ignoreTerrain;
+				var ignoreTerrain = ignoreDifficultTerrain;
+			};
+		};
+			if (tokenElevation !== 0 && game.settings.get("pf2e-dragruler", "elevation")=== true){
+				var ignoreTerrain = true
+			};
+		if(flagsExist === true){
+			if(token.actor.data.flags.pf2e.movement.respectTerrain !== undefined) {
+				const respectDifficultTerrain = token.actor.data.flags.pf2e.movement.respectTerrain;
+				if(respectDifficultTerrain === true) {
+					var ignoreTerrain = false
+				}
+			};
+			};
+		// Lookup the cost for each square occupied by the token
+		if (ignoreTerrain === 0){var ignoreTerrain = false};
+		 if (ignoreTerrain === true){return 1
+		} else{
+		 const costs = area.map(space => canvas.terrain.costGrid[space.y]?.[space.x]?.multiple ?? 1)
+	 // Return the maximum of the costs
+		 return costs.reduce((max, current) => Math.max(max, current))};
 		}
+	}
 
 	dragRuler.registerModule("pf2e-dragruler", PF2ESpeedProvider) //register the speed provider so its selectable from the drag ruler configuration.
 })
