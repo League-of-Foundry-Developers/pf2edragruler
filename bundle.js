@@ -74,7 +74,8 @@ Hooks.once("dragRuler.ready", (SpeedProvider) => {
 			}
 
 		getCostForStep(token, area){
-			var ignoreTerrain = token.actor.data.flags.pf2e?.movement?.ignoreTerrain || false;
+			if(token.actor.data.flags.pf2e?.movement?.flying || token.actor.data.flags.pf2e?.movement?.climbing || token.actor.data.flags.pf2e?.movement?.swimming|| token.actor.data.flags.pf2e?.movement?.burrowing){var ignoreTerrain = true};
+			var ignoreTerrain = token.actor.data.flags.pf2e?.movement?.ignoreTerrain || ignoreTerrain || false;
 			var tokenElevation = token.data.elevation;
 			const respectDifficultTerrain = token.actor.data.flags.pf2e?.movement?.respectTerrain;
 			const reduceDifficultTerrain = token.actor.data.flags.pf2e?.movement?.reduceTerrain;
