@@ -77,12 +77,14 @@ Hooks.once("dragRuler.ready", (SpeedProvider) => {
 			var ignoreTerrain = token.actor.data.flags.pf2e?.movement?.ignoreTerrain || false;
 			var tokenElevation = token.data.elevation;
 			const respectDifficultTerrain = token.actor.data.flags.pf2e?.movement?.respectTerrain;
+			const reduceDifficultTerrain = token.actor.data.flags.pf2e?.movement?.reduceTerrain;
 			const movementType = movementSelect(token);
 			const environmentIgnore = token.actor.data.flags.pf2e?.movement?.env
+
 		 if(environmentIgnore !== undefined){
 			const keys = Object.keys(environmentIgnore);
 			var ignoredEnv = keys.filter(function(key) {
-    				return environmentIgnore[key]
+    		return environmentIgnore[key]
 			});
 		};
 			if (tokenElevation !== 0 && game.settings.get("pf2e-dragruler", "elevation")=== true){
@@ -102,7 +104,9 @@ Hooks.once("dragRuler.ready", (SpeedProvider) => {
 		 } else {
 		 const costs = area.map(space => canvas.terrain.cost([space],{tokenId:token.data._id, elevation:tokenElevation, ignore:ignoredEnv}))
 	 // Return the maximum of the costs
-		 return costs.reduce((max, current) => Math.max(max, current))};
+		 var calcCost = costs.reduce((max, current) => Math.max(max, current))};
+		 if(reduceDifficultTerrain === true && calcCost > 1){calcCost -= 1};
+		 return calcCost;
 		}
 	}
 
