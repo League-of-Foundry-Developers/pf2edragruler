@@ -29,7 +29,7 @@ Hooks.once("dragRuler.ready", (SpeedProvider) => {
 
 // Get the distance for each movement interval to give to drag ruler
 		getRanges(token){
-			const baseSpeed = movementSpeed(token);
+			var baseSpeed = movementSpeed(token);
 			const items = token.actor.data.items.filter(item => item.type === 'condition' && item.flags.pf2e?.condition); //Gets a read out of the conditions effecting the actor.
 			const conditions = game.pf2e.ConditionManager.getFlattenedConditions(items); //Converts the condition list into a state that's easier to use.
 			let numactions = 3; //Sets the default number of actions (3) which can then be modified depending on the conditions.
