@@ -7,7 +7,7 @@ function registerSettings() {
 		config: true,
 		type: Boolean,
 		default: false
-})
+	})
 };
 
 Hooks.once("init", () => {
@@ -80,7 +80,8 @@ Hooks.once("dragRuler.ready", (SpeedProvider) => {
 			const respectDifficultTerrain = token.actor.data.flags.pf2e?.movement?.respectTerrain;
 			const reduceDifficultTerrain = token.actor.data.flags.pf2e?.movement?.reduceTerrain;
 			const movementType = movementSelect(token);
-			const environmentIgnore = token.actor.data.flags.pf2e?.movement?.env
+			const environmentIgnore = token.actor.data.flags.pf2e?.movement?.env?.ignore
+			const environmentReduce = token.actor.data.flags.pf2e?.movement?.env?.reduce
 
 		 if(environmentIgnore !== undefined){
 			const keys = Object.keys(environmentIgnore);
@@ -88,6 +89,13 @@ Hooks.once("dragRuler.ready", (SpeedProvider) => {
     		return environmentIgnore[key]
 			});
 		};
+
+		if(environmentReduce !== undefined){
+		 const keysR = Object.keys(environmentReduce);
+		 var reducedEnv = keysR.filter(function(key) {
+			 return environmentReduce[key]
+		 });
+	 };
 			if (tokenElevation !== 0 && game.settings.get("pf2e-dragruler", "elevation")=== true){
 				ignoreTerrain = true
 			};
@@ -103,9 +111,15 @@ Hooks.once("dragRuler.ready", (SpeedProvider) => {
 		 if (ignoreTerrain === true){
 			 return 1
 		 } else {
-		 const costs = area.map(space => canvas.terrain.cost([space],{tokenId:token.data._id, elevation:tokenElevation, ignore:ignoredEnv}))
+		if (game.modules.get("enhanced-terrain-layer")?.active === true){
+		 const costs = area.map(space => canvas.terrain.cost([space],{tokenId:token.data._id, elevation:tokenElevation, ignore:ignoredEnv, reduce:reducedEnv}))
 	 // Return the maximum of the costs
-		 var calcCost = costs.reduce((max, current) => Math.max(max, current))};
+		 var calcCost = costs.reduce((max, current) => Math.max(max, current))
+	 } else {
+		 const costs = area.map(space => canvas.terrain.costGrid[space.y]?.[space.x]?.multiple ?? 1)
+		 var calcCost = costs.reduce((max, current) => Math.max(max, current));
+		 }
+	 }
 		 if(reduceDifficultTerrain === true && calcCost > 1){calcCost -= 1};
 		 return calcCost;
 		}
@@ -166,7 +180,7 @@ var land = 0; var fly = 0; var swim = 0; var climb = 0; var burrow = 0; var misc
 	if (speeds.length === 0) {speeds.push({id: "land", value: 0})}; //If we've got this far and our speed matrix is empty make the land speed 0, the token ain't moving for shit, but hey you won't get an error. <3
 
 	return speeds //output this shit so it can be read, used back in line 16 -ish. Or at least its line 16 at time of writing. Search for the function "cleanSpeed" if you can't find. If you still can't find it look for glasses.
-}
+};
 //So this actually does a lot of the grabby grabby stuff. Pulls out all the speeds stored under other speeds.
 function speedsSorter (token) {
 var land2 = 0; var fly2 = 0; var swim2 = 0; var climb2 = 0; var burrow2 = 0; var miscSpeed2 =0;
@@ -222,7 +236,7 @@ for(var i=tokenSpeed.length-1; i>=0; i--){
 if (baseSpeed === undefined) {var baseSpeed = parseFloat(tokenSpeed[0].value)}
 
 return baseSpeed
-}
+};
 
 function movementSelect (token) {
 	const tokenElevation = token.data.elevation; //Gives us a way to check if a token is flying
@@ -239,4 +253,4 @@ if(token.actor.data.flags.pf2e?.movement?.swimming !== undefined && token.actor.
 if(token.actor.data.flags.pf2e?.movement?.flying !== undefined && token.actor.data.flags.pf2e?.movement?.flying !== false){var movementType = 'fly'}
 
 return movementType
-}
+};
