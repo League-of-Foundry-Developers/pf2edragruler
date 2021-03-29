@@ -21,7 +21,7 @@
       "name": "terrain-ruler",
       "type": "module",
       "manifest": "https://raw.githubusercontent.com/manuelVo/foundryvtt-terrain-ruler/master/module.json"
-    }
+    },
     {
       "name": "enhanced-terrain-layer",
       "type": "module",
