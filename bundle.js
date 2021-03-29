@@ -6,7 +6,7 @@ function registerSettings() {
 		scope: "world",
 		config: true,
 		type: Boolean,
-		default: true
+		default: false
 })
 };
 
@@ -79,18 +79,20 @@ Hooks.once("dragRuler.ready", (SpeedProvider) => {
 			const respectDifficultTerrain = token.actor.data.flags.pf2e?.movement?.respectTerrain;
 			const movementType = movementSelect(token);
 			const environmentIgnore = token.actor.data.flags.pf2e?.movement?.env
+		 if(environmentIgnore !== undefined){
 			const keys = Object.keys(environmentIgnore);
 			var ignoredEnv = keys.filter(function(key) {
-    		return environmentIgnore[key]
+    				return environmentIgnore[key]
 			});
-
+		};
 			if (tokenElevation !== 0 && game.settings.get("pf2e-dragruler", "elevation")=== true){
-				var ignoreTerrain = true
+				ignoreTerrain = true
 			};
 			if (movementType === 'fly' && game.settings.get("pf2e-dragruler", "elevation")=== false) {tokenElevation = (1 > tokenElevation) ? 1 : tokenElevation; ignoreTerrain = false};
 			if(respectDifficultTerrain === true) {
-				var ignoreTerrain = false
-				tokenElevation = false
+				ignoreTerrain = false
+				tokenElevation = undefined
+				ignoredEnv = [];
 			};
 
 
