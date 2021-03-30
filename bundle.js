@@ -120,7 +120,7 @@ Hooks.once("dragRuler.ready", (SpeedProvider) => {
 		 var calcCost = costs.reduce((max, current) => Math.max(max, current));
 		 }
 	 }
-		 if(reduceDifficultTerrain === true && calcCost > 1){calcCost -= 1};
+		 if(reduceDifficultTerrain === true && calcCost > 1 && respectDifficultTerrain !== true){calcCost -= 1};
 		 return calcCost;
 		}
 	}
