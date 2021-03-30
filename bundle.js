@@ -7,7 +7,7 @@ function registerSettings() {
 		config: true,
 		type: Boolean,
 		default: false
-	})
+})
 };
 
 Hooks.once("init", () => {
@@ -99,7 +99,7 @@ Hooks.once("dragRuler.ready", (SpeedProvider) => {
 			if (tokenElevation !== 0 && game.settings.get("pf2e-dragruler", "elevation")=== true){
 				ignoreTerrain = true
 			};
-			if (movementType === 'fly' && game.settings.get("pf2e-dragruler", "elevation")=== false) {tokenElevation = (1 > tokenElevation) ? 1 : tokenElevation; ignoreTerrain = false};
+			if (movementType === 'fly' && game.settings.get("pf2e-dragruler", "elevation")=== false) {tokenElevation = (1 > tokenElevation) ? 1 : tokenElevation; if (game.modules.get("enhanced-terrain-layer")?.active === true){ignoreTerrain = false}};
 			if(respectDifficultTerrain === true) {
 				ignoreTerrain = false
 				tokenElevation = undefined
