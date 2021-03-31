@@ -33,7 +33,7 @@
             "entity": "Item"
         }
     ],
-    "manifest": "https://raw.githubusercontent.com/velara/pf2edragruler/enhancedterrainlayer/module.json",
+    "manifest": "https://raw.githubusercontent.com/velara/pf2edragruler/main/module.json",
     "download": "https://github.com/velara/pf2edragruler/archive/refs/tags/v0.3.6.zip",
     "url": "https://github.com/Velara/pf2edragruler/"
 }
