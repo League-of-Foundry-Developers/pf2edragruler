@@ -1,4 +1,4 @@
-cconst settingsKey = "pf2e-dragruler";
+const settingsKey = "pf2e-dragruler";
 function registerSettings() {
 	game.settings.register(settingsKey, "elevation", {
 		name: "Automatic Movement Switching",
