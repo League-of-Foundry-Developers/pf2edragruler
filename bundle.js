@@ -1,8 +1,8 @@
-const settingsKey = "pf2e-dragruler";
+cconst settingsKey = "pf2e-dragruler";
 function registerSettings() {
 	game.settings.register(settingsKey, "elevation", {
-		name: "Elevation Settings",
-		hint: "If enabled, positive elevations will automatically use fly speed, and negative elevations will use burrow, if an actor does not have that speed, will use their land speed. If disabled elevation will not effect which speed is used.",
+		name: "Automatic Movement Switching",
+		hint: "If enabled, positive elevations will automatically use fly speed, negative elevations will use burrow, and tokens in water, or aquatic terrain will use swim speeds, if an actor does not have that speed, will use their land speed. If disabled elevation will not effect which speed is used.",
 		scope: "world",
 		config: true,
 		type: Boolean,
@@ -12,6 +12,27 @@ function registerSettings() {
 
 Hooks.once("init", () => {
 	registerSettings();
+});
+
+Hooks.once("ready", () => {
+canvas.terrain.environment = function(){return [{ id: '', text: '' },
+{ id: 'aquatic', text: 'Aquatic' },
+{ id: 'arctic', text: 'Arctic' },
+{ id: 'coast', text: 'Coast' },
+{ id: 'crowd', text: 'Crowd' },
+{ id: 'desert', text: 'Desert' },
+{ id: 'forest', text: 'Forest' },
+{ id: 'magical', text: 'Magical' },
+{ id: 'mountain', text: 'Mountain' },
+{ id: 'plains', text: 'Plains' },
+{ id: 'plants', text: 'Plants' },
+{ id: 'rubble', text: 'Rubble' },
+{ id: 'sky', text: 'Sky' },
+{ id: 'swamp', text: 'Swamp' },
+{ id: 'underground', text: 'Underground' },
+{ id: 'urban', text: 'Urban' },
+{ id: 'water', text: 'Water' }];
+}
 });
 
 Hooks.once("dragRuler.ready", (SpeedProvider) => {
@@ -74,14 +95,18 @@ Hooks.once("dragRuler.ready", (SpeedProvider) => {
 			}
 
 		getCostForStep(token, area){
-			if(token.actor.data.flags.pf2e?.movement?.flying || token.actor.data.flags.pf2e?.movement?.climbing || token.actor.data.flags.pf2e?.movement?.swimming|| token.actor.data.flags.pf2e?.movement?.burrowing){var ignoreTerrain = true};
-			var ignoreTerrain = token.actor.data.flags.pf2e?.movement?.ignoreTerrain || ignoreTerrain || false;
+			if(token.actor.data.flags.pf2e?.movement?.ignoreTerrain|| token.actor.data.flags.pf2e?.movement?.flying || token.actor.data.flags.pf2e?.movement?.climbing || token.actor.data.flags.pf2e?.movement?.burrowing){var ignoreTerrain = true};
+			var ignoreTerrain = ignoreTerrain || false;
 			var tokenElevation = token.data.elevation;
 			const respectDifficultTerrain = token.actor.data.flags.pf2e?.movement?.respectTerrain;
 			const reduceDifficultTerrain = token.actor.data.flags.pf2e?.movement?.reduceTerrain;
 			const movementType = movementSelect(token);
-			const environmentIgnore = token.actor.data.flags.pf2e?.movement?.env?.ignore
-			const environmentReduce = token.actor.data.flags.pf2e?.movement?.env?.reduce
+			const environmentIgnore = token.actor.data.flags.pf2e?.movement?.env?.ignore;
+			const environmentReduce = token.actor.data.flags.pf2e?.movement?.env?.reduce;
+			window.vel = movementType;
+			function getID(item) {var Id = item.id; return Id;};
+			const environmentList = canvas.terrain.environment().map(getID);
+			const nonmagicalEnvList = environmentList.filter(a => a !== 'magical');
 
 		 if(environmentIgnore !== undefined){
 			const keys = Object.keys(environmentIgnore);
@@ -95,7 +120,20 @@ Hooks.once("dragRuler.ready", (SpeedProvider) => {
 		 var reducedEnv = keysR.filter(function(key) {
 			 return environmentReduce[key]
 		 });
-	 };
+		 };
+
+		 var reduced = [];
+		 if(reducedEnv?.find(e => e == 'non-magical')){ if(reducedEnv?.find(e => e == 'magical')) {reducedEnv = environmentList} else{reducedEnv = nonmagicalEnvList}}
+		 for (var i=0, len=reducedEnv?.length||0; i<len; i++){
+			 reduced.push({id:reducedEnv[i], value:'-1'})
+		 };
+		 if (ignoredEnv?.find(e => e == 'non-magical')){ if(ignoredEnv?.find(e => e == 'magical')) {ignoredEnv = environmentList} else{ignoredEnv = nonmagicalEnvList}}
+		 for (var i=0, len=ignoredEnv?.length||0; i<len; i++){
+			 if (reduced.find(e => e.id == ignoredEnv[i])){reduced.find(e => e.id == ignoredEnv[i]).value = 1
+			 }else {reduced.push({id:ignoredEnv[i], value:1})}
+		 };
+		 if (movementType === 'swim' && reduced.find(e => e.id == "water")){reduced.find(e => e.id == ignoredEnv[i]).value = 1} else if (movementType === 'swim'){reduced.push({id:'water', value:1})};
+
 			if (tokenElevation !== 0 && game.settings.get("pf2e-dragruler", "elevation")=== true){
 				ignoreTerrain = true
 			};
@@ -103,7 +141,7 @@ Hooks.once("dragRuler.ready", (SpeedProvider) => {
 			if(respectDifficultTerrain === true) {
 				ignoreTerrain = false
 				tokenElevation = undefined
-				ignoredEnv = [];
+				reduced = [];
 			};
 
 
@@ -112,7 +150,7 @@ Hooks.once("dragRuler.ready", (SpeedProvider) => {
 			 return 1
 		 } else {
 		if (game.modules.get("enhanced-terrain-layer")?.active === true){
-		 const costs = area.map(space => canvas.terrain.cost([space],{tokenId:token.data._id, elevation:tokenElevation, ignore:ignoredEnv, reduce:reducedEnv}))
+		 const costs = area.map(space => canvas.terrain.cost([space],{tokenId:token.data._id, elevation:tokenElevation, reduce:reduced}))
 	 // Return the maximum of the costs
 		 var calcCost = costs.reduce((max, current) => Math.max(max, current))
 	 } else {
@@ -225,6 +263,12 @@ if (game.settings.get("pf2e-dragruler", "elevation")=== true) {
 			if (tokenSpeed[i].id === 'burrow') {var baseSpeed = parseFloat(tokenSpeed[i].value)}
 		}
 	} else if (tokenElevation === 0){var baseSpeed = parseFloat(tokenSpeed[0].value)} // If the token isn't elevated, just assigns the default speed to the first speed.
+	if(canvas.terrain.terrainAt(token.data.x/100,token.data.y/100)[0]?.environment === 'aquatic' || canvas.terrain.terrainAt(token.data.x/100,token.data.y/100)[0]?.environment === 'water'){
+		for(var i=0, len= tokenSpeed.length; i<len; i++){
+			// When we find the burrow speed sets it as the value for the default.
+			if (tokenSpeed[i].id === 'swim') {var baseSpeed = parseFloat(tokenSpeed[i].value)}
+		}
+	};
 }
 for(var i=tokenSpeed.length-1; i>=0; i--){
 	if(tokenSpeed[i].id === 'burrow' && token.actor.data.flags.pf2e?.movement?.burrowing !== undefined && token.actor.data.flags.pf2e?.movement?.burrowing !== false){var baseSpeed = parseFloat(tokenSpeed[i].value)}
@@ -246,6 +290,7 @@ function movementSelect (token) {
 if (game.settings.get("pf2e-dragruler", "elevation")=== true) {
 	if(tokenElevation > 0) {var movementType = 'fly'};
 	if (tokenElevation < 0){var movementType = 'burrow'};
+	if(canvas.terrain.terrainAt(token.data.x/100,token.data.y/100)[0]?.environment === 'aquatic' || canvas.terrain.terrainAt(token.data.x/100,token.data.y/100)[0]?.environment === 'water'){var movementType = 'swim'};
 };
 if(token.actor.data.flags.pf2e?.movement?.burrowing !== undefined && token.actor.data.flags.pf2e?.movement?.burrowing !== false){var movementType = 'burrow'}
 if(token.actor.data.flags.pf2e?.movement?.climbing !== undefined && token.actor.data.flags.pf2e?.movement?.climbing !== false){var movementType = 'climb'}
