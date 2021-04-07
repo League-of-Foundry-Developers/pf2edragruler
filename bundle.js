@@ -239,8 +239,8 @@ function envReductions (token){
 	var reduced = [];
 	const movementType = movementSelect(token);
 	const tokenElevation = token.data.elevation
-	var ignoredEnv= Object.keys(token.actor.data.flags.pf2e?.movement?.env?.ignore || {id: "none"} ).filter(a => token.actor.data.flags.pf2e?.movement?.env?.ignore[a]);
-	var reducedEnv= Object.keys(token.actor.data.flags.pf2e?.movement?.env?.reduce || {id: "none"} ).filter(a => token.actor.data.flags.pf2e?.movement?.env?.reduce[a]);
+	var ignoredEnv= Object.keys(token.actor.data.flags.pf2e?.movement?.env?.ignore || {id: "none"} ).filter(a => token.actor.data.flags.pf2e?.movement?.env?.ignore?.[a]);
+	var reducedEnv= Object.keys(token.actor.data.flags.pf2e?.movement?.env?.reduce || {id: "none"} ).filter(a => token.actor.data.flags.pf2e?.movement?.env?.reduce?.[a]);
 
 
 	if (game.modules.get("enhanced-terrain-layer")?.active === false && game.settings.get("pf2e-dragruler", "auto") && (tokenElevation !== 0 || movementType === 'fly' === true)) {reduced = "ignore"};
