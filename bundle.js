@@ -15,23 +15,28 @@ Hooks.once("init", () => {
 
 Hooks.once("ready", () => {
  if (game.modules.get("enhanced-terrain-layer")?.active){
-	canvas.terrain.environment = function(){return [{ id: '', text: '' },
+	canvas.terrain.getEnvironments = function(){return [
 		{ id: 'aquatic', text: 'Aquatic' },
 		{ id: 'arctic', text: 'Arctic' },
 		{ id: 'coast', text: 'Coast' },
-		{ id: 'crowd', text: 'Crowd' },
 		{ id: 'desert', text: 'Desert' },
 		{ id: 'forest', text: 'Forest' },
-		{ id: 'magical', text: 'Magical' },
 		{ id: 'mountain', text: 'Mountain' },
 		{ id: 'plains', text: 'Plains' },
-		{ id: 'plants', text: 'Plants' },
-		{ id: 'rubble', text: 'Rubble' },
 		{ id: 'sky', text: 'Sky' },
 		{ id: 'swamp', text: 'Swamp' },
 		{ id: 'underground', text: 'Underground' },
-		{ id: 'urban', text: 'Urban' },
-		{ id: 'water', text: 'Water' }];
+		{ id: 'urban', text: 'Urban' }];
+	},
+	canvas.terrain.getObstacles = function(){return [
+		{ id: 'current', text: 'Current' },
+		{ id: 'crowd', text: 'Crowd' },
+		{ id: 'ice', text: 'Ice' },
+		{ id: 'magical', text: 'Magical' },
+		{ id: 'plants', text: 'Plants' },
+		{ id: 'rubble', text: 'Rubble' },
+		{ id: 'water', text: 'Water' },
+		{ id: 'wind', text: 'Wind' }];
 	}
  }
 });
@@ -71,7 +76,7 @@ Hooks.once("dragRuler.ready", (SpeedProvider) => {
 			var reduced = envReductions(token);
 			if(token.actor.data.flags.pf2e?.movement?.flying === true && token.data.elevation <= 0){var tokenElevation = 1} else if(reduced === "respect"){var tokenElevation = undefined} else {var tokenElevation = token.data.elevation};
 			// Lookup the cost for each square occupied by the token
-			window.vel = reduced
+
 			if (reduced === "ignore"){ return 1 } else {
 					if (game.modules.get("enhanced-terrain-layer")?.active === true){
 					 if (reduced === "respect"){ reduced = [];}
@@ -239,8 +244,8 @@ function envReductions (token){
 	var reduced = [];
 	const movementType = movementSelect(token);
 	const tokenElevation = token.data.elevation
-	var ignoredEnv= Object.keys(token.actor.data.flags.pf2e?.movement?.env?.ignore || {id: "none"} ).filter(a => token.actor.data.flags.pf2e?.movement?.env?.ignore?.[a]);
-	var reducedEnv= Object.keys(token.actor.data.flags.pf2e?.movement?.env?.reduce || {id: "none"} ).filter(a => token.actor.data.flags.pf2e?.movement?.env?.reduce?.[a]);
+	var ignoredEnv= Object.keys(token.actor.data.flags.pf2e?.movement?.env?.ignore || {any: false} ).filter(a => token.actor.data.flags.pf2e?.movement?.env?.ignore?.[a]);
+	var reducedEnv= Object.keys(token.actor.data.flags.pf2e?.movement?.env?.reduce || {any: false} ).filter(a => token.actor.data.flags.pf2e?.movement?.env?.reduce?.[a]);
 
 
 	if (game.modules.get("enhanced-terrain-layer")?.active === false && game.settings.get("pf2e-dragruler", "auto") && (tokenElevation !== 0 || movementType === 'fly' === true)) {reduced = "ignore"};
@@ -249,16 +254,17 @@ function envReductions (token){
 	if(token.actor.data.flags.pf2e?.movement?.respectTerrain|| token.actor.data.flags.pf2e?.movement?.climbing){reduced = "respect"};
 
 	if (game.modules.get("enhanced-terrain-layer")?.active){
-		const environmentList = canvas.terrain.environment().map(a => a.id);
+		const terrainList = canvas.terrain.getObstacles().map(a => a.id);
+		terrainList.concat(canvas.terrain.getEnvironments().map(a => a.id));
 	if (reduced.length === 0){
-		if (token.actor.data.flags.pf2e?.movement?.reduceTerrain === true) {reducedEnv = environmentList};
-		if(reducedEnv?.find(e => e == 'non-magical')){ if(reducedEnv?.find(e => e == 'magical')) {reducedEnv = environmentList} else{reducedEnv = environmentList.filter(a => a !== 'magical')}};
+		if (token.actor.data.flags.pf2e?.movement?.reduceTerrain === true) {reducedEnv = terrainList};
+		if(reducedEnv?.find(e => e == 'non-magical')){ if(reducedEnv?.find(e => e == 'magical')) {reducedEnv = terrainList} else{reducedEnv = terrainList.filter(a => a !== 'magical')}};
 		for (var i=0, len=reducedEnv?.length||0; i<len; i++){
 			reduced.push({id:reducedEnv[i], value:'-1'})
 		};
 
-		if (ignoredEnv?.find(e => e == 'non-magical')){ if(ignoredEnv?.find(e => e == 'magical')) {ignoredEnv = environmentList} else{ignoredEnv = environmentList.filter(a => a !== 'magical')}};
-		if (movementType === 'burrow') {ignoredEnv = environmentList.filter(a => a !== 'underground')};
+		if (ignoredEnv?.find(e => e == 'non-magical')){ if(ignoredEnv?.find(e => e == 'magical')) {ignoredEnv = terrainList} else{ignoredEnv = terrainList.filter(a => a !== 'magical')}};
+		if (movementType === 'burrow') {ignoredEnv = terrainList.filter(a => a !== 'underground')};
 		if (movementType === 'swim' && reduced.find(e => e.id == "water")){reduced.find(e => e.id == "water").value = 1} else if (movementType === 'swim'){reduced.push({id:'water', value:1})};
 		for (var i=0, len=ignoredEnv?.length||0; i<len; i++){
 			if (reduced.find(e => e.id == ignoredEnv[i])){reduced.find(e => e.id == ignoredEnv[i]).value = 1
