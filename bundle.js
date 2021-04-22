@@ -6,6 +6,14 @@ function registerSettings() {
 		config: true,
 		type: Boolean,
 		default: false
+}),
+game.settings.register("pf2e-dragruler", "scene", {
+	name: "Scene Environment Automation",
+	hint: "If enabled, actors in Sky scenes will automatically use fly speed, and those in aquatic terrain will use swim speeds, if an actor does not have a speed, will use their land speed.",
+	scope: "world",
+	config: true,
+	type: Boolean,
+	default: false
 })
 };
 
@@ -56,27 +64,26 @@ Hooks.once("dragRuler.ready", (SpeedProvider) => {
 
 // Get the distance for each movement interval to give to drag ruler
 		getRanges(token){
-			var baseSpeed = movementSpeed(token);
 			var numactions = actionCount(token);
+			var movement = movementTracking(token);
 			const ranges = [];
-
-		if (numactions > 0 && baseSpeed > 0){
+			token.actor.setFlag('pf2e', 'actions.remainingActions', (numactions - movement.usedActions));
+			window.Vel = movement;
+		if (numactions > 0 && movement.A1 > 0){
 			//Set the ranges for each of our four actions to be given to the drag ruler.
-			ranges.push({range: baseSpeed, color: "FirstAction"},{range: baseSpeed * 2, color: "SecondAction"}, { range: baseSpeed * 3, color: "ThirdAction" },{range: baseSpeed * 4, color: "FourthAction"});
+			ranges.push({range: movement.A1, color: "FirstAction"},{range: movement.A2, color: "SecondAction"}, { range: movement.A3, color: "ThirdAction" },{range: movement.A4, color: "FourthAction"});
 			//Remove ranges from the function until only the ranges equal to the number of legal actions remain.
 			 for (var i = numactions, len=ranges.length; i<len; i++){
 				ranges.pop();
 			 };
 		 } else {ranges.push({range: 0, color: "FirstAction"})}; //Since ranges is empty if you've got no actions add a range for the first action of 0.
-
 			return ranges;
 		};
 
 		getCostForStep(token, area){
 			var reduced = envReductions(token);
-			if(token.actor.data.flags.pf2e?.movement?.flying === true && token.data.elevation <= 0){var tokenElevation = 1} else if(reduced === "respect"){var tokenElevation = undefined} else {var tokenElevation = token.data.elevation};
+			if( movementSelect(token) === 'fly' && token.data.elevation <= 0){var tokenElevation = 1} else if(reduced === "respect"){var tokenElevation = undefined} else {var tokenElevation = token.data.elevation};
 			// Lookup the cost for each square occupied by the token
-
 			if (reduced === "ignore"){ return 1 } else {
 					if (game.modules.get("enhanced-terrain-layer")?.active === true){
 					 if (reduced === "respect"){ reduced = [];}
@@ -90,14 +97,22 @@ Hooks.once("dragRuler.ready", (SpeedProvider) => {
 					 if (reduced === "reduce" && calcCost > 1) {calcCost -= 1}
 					 return calcCost;
 				 }
-
-			}
-
+			};
 	}
 
 	dragRuler.registerModule("pf2e-dragruler", PF2ESpeedProvider) //register the speed provider so its selectable from the drag ruler configuration.
 });
 
+Hooks.on('preUpdateCombat', () => {
+	const combat = game.combats.active;
+	const combatant = combat.turns[combat.turn];
+	const previousCombatant = combat.turns[(combat.turn - 1) < 0 ? (combat.turns.length - 1): (combat.turn - 1)];
+	combatant.actor.unsetFlag('pf2e', 'actions');
+	combatant.actor.setFlag('pf2e', 'actions.numActions', 3);
+	previousCombatant.actor.unsetFlag('pf2e', 'actions');
+	const flags = {trackedRound: 0, rulerState: null};
+	import("/modules/drag-ruler/src/socket.js").then(module => module.updateCombatantDragRulerFlags(combat, combatant, flags));
+});
 
 function cleanSpeed(token) {
 var land = 0; var fly = 0; var swim = 0; var climb = 0; var burrow = 0; var miscSpeed =0; //set empty variables for each speed, so JS doesn't complain later. Some comments refer to these as the OG variables because I'm extra like that.
@@ -180,11 +195,17 @@ function movementSelect (token) {
 	var movementType = 'default';
 
 //This logic gate handles flight and burrowing, if the elevation setting is on.
+if (game.settings.get("pf2e-dragruler", "scene")=== true) {
+	if(canvas.scene.data.flags?.['enhanced-terrain-layer']?.environment == 'sky') {var movementType = 'fly'};
+	if(canvas.scene.data.flags?.['enhanced-terrain-layer']?.environment == 'aquatic'){var movementType = 'swim'};
+};
+
 if (game.settings.get("pf2e-dragruler", "auto")=== true) {
 	if(tokenElevation > 0) {var movementType = 'fly'};
 	if (tokenElevation < 0){var movementType = 'burrow'};
 	if (game.modules.get("enhanced-terrain-layer")?.active){if(canvas.terrain.terrainAt(token.data.x/100,token.data.y/100)[0]?.environment === 'aquatic' || canvas.terrain.terrainAt(token.data.x/100,token.data.y/100)[0]?.environment === 'water'){var movementType = 'swim'}};
 };
+
 if(token.actor.data.flags.pf2e?.movement?.burrowing === true){var movementType = 'burrow'}
 if(token.actor.data.flags.pf2e?.movement?.climbing === true){var movementType = 'climb'}
 if(token.actor.data.flags.pf2e?.movement?.swimming === true){var movementType = 'swim'}
@@ -209,7 +230,7 @@ function movementSpeed (token) {
 };
 
 function actionCount (token){
-let numactions = 3; //Sets the default number of actions (3) which can then be modified depending on the conditions.
+let numactions = token.actor.data.flags.pf2e?.actions?.numActions ?? 3; //Sets the default number of actions (3) which can then be modified depending on the conditions.
 const conditions = game.pf2e.ConditionManager.getFlattenedConditions(token.actor.data.items.filter(item => item.type === 'condition' && item.flags.pf2e?.condition)); //Gets a read out of the conditions effecting the actor & converts the condition list into a state that's easier to use.
 
 //This loop handles all changes to number of actions from conditions.
@@ -237,8 +258,41 @@ for (var i=0, len=conditions.length; i<len; i++) {
 
 if (numactions < 0) {numactions = 0};
 //You can't have less than 0 actions, if you've managed to get to less than 0, due to being stunned 4 for example, set the number of actions you get to take to 0
+token.actor.setFlag('pf2e', 'actions.numActions', numactions)
 return numactions
 };
+
+function movementTracking (token){
+	const distanceMoved = dragRuler.getMovedDistanceFromToken(token);
+	const baseSpeed = movementSpeed(token);
+
+	if (distanceMoved > token.actor.data.flags.pf2e?.actions?.action3 && token.actor.data.flags.pf2e?.actions?.action4 === undefined){
+		token.actor.setFlag('pf2e', 'actions.action4', Math.min((baseSpeed*4), distanceMoved));
+	}
+	if (distanceMoved > token.actor.data.flags.pf2e?.actions?.action2 && token.actor.data.flags.pf2e?.actions?.action3 === undefined){
+		token.actor.setFlag('pf2e', 'actions.action3', Math.min((baseSpeed*3), distanceMoved));
+	}
+	if (distanceMoved > token.actor.data.flags.pf2e?.actions?.action1 && token.actor.data.flags.pf2e?.actions?.action2 === undefined){
+		token.actor.setFlag('pf2e', 'actions.action2', Math.min((baseSpeed*2), distanceMoved));
+	}
+	if (distanceMoved > 0 && token.actor.data.flags.pf2e?.actions?.action1 === undefined) {
+		token.actor.setFlag('pf2e', 'actions.action1', (Math.min(baseSpeed, distanceMoved)));
+	};
+
+	const A1 = token.actor.data.flags.pf2e?.actions?.action1 || baseSpeed;
+	const A2 = token.actor.data.flags.pf2e?.actions?.action2 || (baseSpeed * 2);
+	const A3 = token.actor.data.flags.pf2e?.actions?.action3 || (baseSpeed * 3);
+	const A4 = token.actor.data.flags.pf2e?.actions?.action4 || (baseSpeed * 4);
+
+	var usedActions = 0;
+	if (token.actor.data.flags.pf2e?.actions?.action4 !== undefined){var usedActions = 4
+	} else if (token.actor.data.flags.pf2e?.actions?.action3 !== undefined) {var usedActions = 3
+	} else if (token.actor.data.flags.pf2e?.actions?.action2 !== undefined) {var usedActions = 2
+	} else if (token.actor.data.flags.pf2e?.actions?.action2 !== undefined) {var usedActions = 1
+	} else {const usedActions = 0};
+
+	return {A1: A1, A2: A2, A3: A3, A4: A4, usedActions:usedActions}
+}
 
 function envReductions (token){
 	var reduced = [];
