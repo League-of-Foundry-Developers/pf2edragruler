@@ -19,6 +19,13 @@
     }],
     "packs": [
         {
+          "name": "action-tracking",
+          "label": "Action Tracking",
+          "path": "packs/action-tracking.db",
+          "module": "pf2e-dragruler",
+          "entity": "Macro"
+        },
+        {
             "name": "movement-effects",
             "label": "Movement Effects",
             "path": "packs/movement-effects.db",
@@ -33,8 +40,8 @@
             "entity": "Item"
         }
     ],
-    "manifest": "https://raw.githubusercontent.com/velara/pf2edragruler/main/module.json",
-    "download": "https://github.com/velara/pf2edragruler/archive/refs/tags/v0.3.9.zip",
-    "url": "https://github.com/Velara/pf2edragruler/"
+    "manifest": "https://raw.githubusercontent.com/League-of-Foundry-Developers/pf2edragruler/main/module.json",
+    "download": "https://github.com/League-of-Foundry-Developers/pf2edragruler/archive/refs/tags/v0.3.9.zip",
+    "url": "https://github.com/League-of-Foundry-Developers/pf2edragruler"
 }
 
