@@ -72,7 +72,6 @@ Hooks.once("dragRuler.ready", (SpeedProvider) => {
 			var numactions = actionCount(token); //Use the actionCount function to determine how many actions that token gets each round.
 			var movement = movementTracking(token); //Use the movementTracking function to get how far each movement range should be.
 			const ranges = []; //create blank array to store the ranges in.
-
 			token.actor.setFlag('pf2e', 'actions.remainingActions', (numactions - movement.usedActions)); //Set a flag with the number of remaining actions, so the number can be called by the player. If drag rulers movement history tracking is off, will not updated based on movement.
 
 		if (numactions > 0 && movement.A1 > 0){
@@ -90,7 +89,7 @@ Hooks.once("dragRuler.ready", (SpeedProvider) => {
 			//this handles all the difficult terrain stuff.
 			var reduced = envReductions(token); //the envReductions functions pulls information about any types of difficult terrain the token should ignore, or reduce the cost of.
 			//if the token is flying, but the elevation hasn't been modified, treat the elevation as 1, enhanced terrain layer recognizes the token as being affected by air terrain. If the token has been set to respect difficult terrain regardless of usual reductions, treat the elevation as undefined to bypass enhanced terrain rulers ignoring terrain based on elevation. Otherwise treat the token elevation as the tokens actual elevation.
-			if( movementSelect(token) === 'fly' && token.data.elevation <= 0){var tokenElevation = 1} else if(reduced === "respect"){var tokenElevation = undefined} else {var tokenElevation = token.data.elevation};
+			if( movementSpeed(token).type === 'fly' && token.data.elevation <= 0){var tokenElevation = 1} else if(reduced === "respect"){var tokenElevation = undefined} else {var tokenElevation = token.data.elevation};
 			// Lookup the cost for each square occupied by the token
 			if (reduced === "ignore"){ return 1 } else {
 				//if all difficult terrain is being ignored, skip the whole process and treat the cost per movement as 1.
@@ -114,16 +113,12 @@ Hooks.once("dragRuler.ready", (SpeedProvider) => {
 	dragRuler.registerModule("pf2e-dragruler", PF2ESpeedProvider) //register the speed provider so its selectable from the drag ruler configuration.
 });
 
-
 Hooks.on('preUpdateCombat', () => {
 	const combat = game.combats.active; //set the current combat
 	const combatant = combat.turns[combat.turn]; //find the current combatant
 	const nextCombatant = combat.turns[(combat.turn + 1) > (combat.turns.length - 1) ? 0 : (combat.turn + 1)]; //find the next combatant
-	//const previousCombatant = combat.turns[(combat.turn - 1) > (combat.turns.length - 1) ? 0 : (combat.turn + 1)];
 	combatant.actor.unsetFlag('pf2e', 'actions'); //clear all the action tracking flags from the current combatant.
-	//previousCombatant.actor.unsetFlag('pf2e', 'actions'); //clear all the action tracking flags from the current combatant.
 	nextCombatant.actor.unsetFlag('pf2e', 'actions'); //clear all the action tracking flags from the next combatant. (Proved to be necessary to handle off turn movement.)
-	combatant.actor.setFlag('pf2e', 'actions.numActions', 3); //set the default number of actions as a flag, this way it can be reduced by the spend/restore action macros.
  if(game.settings.get("drag-ruler", "enableMovementHistory") === true){
 	const flags = {trackedRound: 0, rulerState: null};
 	import("/modules/drag-ruler/src/socket.js").then(module => module.updateCombatantDragRulerFlags(combat, combatant, flags)); //if movement history exists, for the combatant (which is actually the actor whos turn just finished) clears it. Also important for off turn movement.
@@ -236,16 +231,16 @@ return movementType
 
 function movementSpeed (token) {
 	const tokenSpeed = cleanSpeed(token); //This does most of the heavy lifting in terms of giving us all the base speeds for a token.
-	const movement = movementSelect(token); //returns the type of movement to return.
+	var movement = movementSelect(token); //returns the type of movement to return.
 
 	 //Sets base speed to the default value.
 	if (movement === "burrow") {var baseSpeed = tokenSpeed.find(e => e.id == "burrow")?.value} // If movement type is set to burrowing, sets base speed to burrow speed. If one can be found.
 	else if (movement === "climb") {var baseSpeed = tokenSpeed.find(e => e.id == "climb")?.value} // If movement type is set to climbing, sets base speed to climb speed. If one can be found.
 	else if (movement === "swim") {var baseSpeed = tokenSpeed.find(e => e.id == "swim")?.value} // If movement type is set to swimming, sets base speed to swim speed. If one can be found.
 	else if (movement === "fly") {var baseSpeed = tokenSpeed.find(e => e.id == "fly")?.value}; // If movement type is set to flying, sets base speed to fly speed. If one can be found.
-	if (movement === "default" || baseSpeed === undefined){var baseSpeed = parseFloat(tokenSpeed[0].value)}; // if the movement type was not set to one burrow,climb,swim, or fly. Or if no speed of the requested type exists for that actor, returns the land speed.
+	if (movement === "default" || baseSpeed === undefined){var baseSpeed = parseFloat(tokenSpeed[0].value); movement = "default"}; // if the movement type was not set to one burrow,climb,swim, or fly. Or if no speed of the requested type exists for that actor, returns the land speed.
 
-	return baseSpeed
+	return {speed:baseSpeed, type:movement}
 
 };
 
@@ -286,7 +281,7 @@ return numactions
 //This function handles tracking how far a token has moved, allowing for drag ruler to consider movements less than a full movement speed as complete.
 function movementTracking (token){
 	const distanceMoved = dragRuler.getMovedDistanceFromToken(token); //gets how far the token has moved this round.
-	const baseSpeed = movementSpeed(token); //gets the base speed for the token, based on current movement type.
+	const baseSpeed = movementSpeed(token).speed; //gets the base speed for the token, based on current movement type.
 	var usedActions = 0;
 
 //if movement history is enabled, stores how far a token moved as the maximum range for that movement.
@@ -308,14 +303,13 @@ if(game.settings.get("drag-ruler", "enableMovementHistory") === true){
 	if (token.actor.data.flags.pf2e?.actions?.action4 !== undefined){var usedActions = 4
 	} else if (token.actor.data.flags.pf2e?.actions?.action3 !== undefined) {var usedActions = 3
 	} else if (token.actor.data.flags.pf2e?.actions?.action2 !== undefined) {var usedActions = 2
-	} else if (token.actor.data.flags.pf2e?.actions?.action2 !== undefined) {var usedActions = 1
+	} else if (token.actor.data.flags.pf2e?.actions?.action1 !== undefined) {var usedActions = 1
 	} else {const usedActions = 0};
-
 	//sets the range for each movement as either how far the token moved for that action, or to how far the token moved for the previous action, plus the base speed.
 		const A1 = token.actor.data.flags.pf2e?.actions?.action1 || baseSpeed;
-		const A2 = Math.min(token.actor.data.flags.pf2e?.actions?.action2, (token.actor.data.flags.pf2e?.actions?.action1 + baseSpeed)) || baseSpeed*2;
-		const A3 = Math.min(token.actor.data.flags.pf2e?.actions?.action3 || (token.actor.data.flags.pf2e?.actions?.action2 + baseSpeed)) || baseSpeed*3 ;
-		const A4 = Math.min(token.actor.data.flags.pf2e?.actions?.action4 || (token.actor.data.flags.pf2e?.actions?.action3 + baseSpeed)) || baseSpeed*4;
+		const A2 = (token.actor.data.flags.pf2e?.actions?.action2 || (A1 + baseSpeed)) || baseSpeed*2;
+		const A3 = (token.actor.data.flags.pf2e?.actions?.action3 || (A2 + baseSpeed)) || baseSpeed*3;
+		const A4 = (token.actor.data.flags.pf2e?.actions?.action4 || (A3 + baseSpeed)) || baseSpeed*4;
 		return {A1: A1, A2: A2, A3: A3, A4: A4, usedActions:usedActions}
 	} else {
 	//if movement history isn't enabled set the range for each movement to just the maximum.
@@ -330,7 +324,7 @@ if(game.settings.get("drag-ruler", "enableMovementHistory") === true){
 //handles all the ignore/reduce terrain stuff.
 function envReductions (token){
 	var reduced = []; //sets up an array.
-	const movementType = movementSelect(token); //gets type of movement.
+	const movementType = movementSpeed(token).type; //gets type of movement.
 	const tokenElevation = token.data.elevation //gets token elevation.
 	var ignoredEnv= Object.keys(token.actor.data.flags.pf2e?.movement?.env?.ignore || {any: false} ).filter(a => token.actor.data.flags.pf2e?.movement?.env?.ignore?.[a]);  //finds all the flags set by effects asking the actor to ignore a type of terrain.
 	var reducedEnv= Object.keys(token.actor.data.flags.pf2e?.movement?.env?.reduce || {any: false} ).filter(a => token.actor.data.flags.pf2e?.movement?.env?.reduce?.[a]); //finds all the flags set by effects asking the actor to reduce the cost of a type of terrain.
