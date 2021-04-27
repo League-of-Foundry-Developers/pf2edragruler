@@ -1,4 +1,5 @@
 function registerSettings() {
+	// Create the setting for Automatic Movement switching for later use.
 	game.settings.register("pf2e-dragruler", "auto", {
 		name: "Automatic Movement Switching",
 		hint: "If enabled, positive elevations will automatically use fly speed, negative elevations will use burrow, and tokens in water, or aquatic terrain will use swim speeds, if an actor does not have that speed, will use their land speed.",
@@ -7,6 +8,7 @@ function registerSettings() {
 		type: Boolean,
 		default: false
 }),
+// Create the setting for automatically switching movement type based on a scene's environment.
 game.settings.register("pf2e-dragruler", "scene", {
 	name: "Scene Environment Automation",
 	hint: "If enabled, actors in Sky scenes will automatically use fly speed, and those in aquatic terrain will use swim speeds, if an actor does not have a speed, will use their land speed.",
@@ -18,33 +20,36 @@ game.settings.register("pf2e-dragruler", "scene", {
 };
 
 Hooks.once("init", () => {
+	//Wait until the game is initialized, then register the settings created previously.
 	registerSettings();
 });
 
 Hooks.once("ready", () => {
+	//Once the game is ready, if enhanced terrain layer is active, overwrite the original environment/obstacle lists with a PF2e specific list.
  if (game.modules.get("enhanced-terrain-layer")?.active){
 	canvas.terrain.getEnvironments = function(){return [
-		{ id: 'aquatic', text: 'Aquatic' },
-		{ id: 'arctic', text: 'Arctic' },
-		{ id: 'coast', text: 'Coast' },
-		{ id: 'desert', text: 'Desert' },
-		{ id: 'forest', text: 'Forest' },
-		{ id: 'mountain', text: 'Mountain' },
-		{ id: 'plains', text: 'Plains' },
-		{ id: 'sky', text: 'Sky' },
-		{ id: 'swamp', text: 'Swamp' },
-		{ id: 'underground', text: 'Underground' },
-		{ id: 'urban', text: 'Urban' }];
+		{ id: 'aquatic', text: 'Aquatic', icon:'water.png'},
+		{ id: 'arctic', text: 'Arctic', icon:'arctic.png' },
+		{ id: 'coast', text: 'Coast', icon:'coast.png' },
+		{ id: 'desert', text: 'Desert', icon:'desert.png' },
+		{ id: 'forest', text: 'Forest', icon:'forest.png' },
+		{ id: 'hills', text: 'Hills', icon:'' },
+		{ id: 'mountain', text: 'Mountain', icon:'mountain.png' },
+		{ id: 'plains', text: 'Plains', icon:'wheat.png' },
+		{ id: 'sky', text: 'Sky', icon:'' },
+		{ id: 'swamp', text: 'Swamp', icon:'swamp.png' },
+		{ id: 'underground', text: 'Underground', icon:'' },
+		{ id: 'urban', text: 'Urban', icon:'' }];
 	},
 	canvas.terrain.getObstacles = function(){return [
-		{ id: 'current', text: 'Current' },
-		{ id: 'crowd', text: 'Crowd' },
-		{ id: 'ice', text: 'Ice' },
-		{ id: 'magical', text: 'Magical' },
-		{ id: 'plants', text: 'Plants' },
-		{ id: 'rubble', text: 'Rubble' },
-		{ id: 'water', text: 'Water' },
-		{ id: 'wind', text: 'Wind' }];
+		{ id: 'current', text: 'Current', icon:'current.png' },
+		{ id: 'crowd', text: 'Crowd', icon:'' },
+		{ id: 'ice', text: 'Ice', icon:'frozen-orb.png'},
+		{ id: 'magical', text: 'Magical', icon:'magic.png' },
+		{ id: 'plants', text: 'Plants', icon:'plants.png' },
+		{ id: 'rubble', text: 'Rubble', icon:'rubble.png' },
+		{ id: 'water', text: 'Water', icon:'swamp2.png' },
+		{ id: 'wind', text: 'Wind', icon:'' }];
 	}
  }
 });
@@ -64,11 +69,12 @@ Hooks.once("dragRuler.ready", (SpeedProvider) => {
 
 // Get the distance for each movement interval to give to drag ruler
 		getRanges(token){
-			var numactions = actionCount(token);
-			var movement = movementTracking(token);
-			const ranges = [];
-			token.actor.setFlag('pf2e', 'actions.remainingActions', (numactions - movement.usedActions));
-			window.Vel = movement;
+			var numactions = actionCount(token); //Use the actionCount function to determine how many actions that token gets each round.
+			var movement = movementTracking(token); //Use the movementTracking function to get how far each movement range should be.
+			const ranges = []; //create blank array to store the ranges in.
+
+			token.actor.setFlag('pf2e', 'actions.remainingActions', (numactions - movement.usedActions)); //Set a flag with the number of remaining actions, so the number can be called by the player. If drag rulers movement history tracking is off, will not updated based on movement.
+
 		if (numactions > 0 && movement.A1 > 0){
 			//Set the ranges for each of our four actions to be given to the drag ruler.
 			ranges.push({range: movement.A1, color: "FirstAction"},{range: movement.A2, color: "SecondAction"}, { range: movement.A3, color: "ThirdAction" },{range: movement.A4, color: "FourthAction"});
@@ -81,20 +87,25 @@ Hooks.once("dragRuler.ready", (SpeedProvider) => {
 		};
 
 		getCostForStep(token, area){
-			var reduced = envReductions(token);
+			//this handles all the difficult terrain stuff.
+			var reduced = envReductions(token); //the envReductions functions pulls information about any types of difficult terrain the token should ignore, or reduce the cost of.
+			//if the token is flying, but the elevation hasn't been modified, treat the elevation as 1, enhanced terrain layer recognizes the token as being affected by air terrain. If the token has been set to respect difficult terrain regardless of usual reductions, treat the elevation as undefined to bypass enhanced terrain rulers ignoring terrain based on elevation. Otherwise treat the token elevation as the tokens actual elevation.
 			if( movementSelect(token) === 'fly' && token.data.elevation <= 0){var tokenElevation = 1} else if(reduced === "respect"){var tokenElevation = undefined} else {var tokenElevation = token.data.elevation};
 			// Lookup the cost for each square occupied by the token
 			if (reduced === "ignore"){ return 1 } else {
+				//if all difficult terrain is being ignored, skip the whole process and treat the cost per movement as 1.
 					if (game.modules.get("enhanced-terrain-layer")?.active === true){
-					 if (reduced === "respect"){ reduced = [];}
-					 const costs = area.map(space => canvas.terrain.cost([space],{tokenId:token.data._id, elevation:tokenElevation, reduce:reduced})); //
+						// method for calculating difficult terrain if enhanced terrain layer is active
+					 if (reduced === "respect"){ reduced = [];} // if the token has been set to respect all difficult terrain, set the array of reductions to blank.
+					 const costs = area.map(space => canvas.terrain.cost([space],{tokenId:token.data._id, elevation:tokenElevation, reduce:reduced})); // determine the cost of movement
 				 // Return the maximum of the costs
 					 var calcCost = costs.reduce((max, current) => Math.max(max, current))
 				 } else {
+					 //method for calculating difficult terrain if the old terrain layer module is in use.
 					 	const costs = area.map(space => canvas.terrain.costGrid[space.y]?.[space.x]?.multiple ?? 1);
 					 	var calcCost = costs.reduce((max, current) => Math.max(max, current));
 					 }
-					 if (reduced === "reduce" && calcCost > 1) {calcCost -= 1}
+					 if (reduced === "reduce" && calcCost > 1) {calcCost -= 1} //If the token is set to reduce the cost of all difficult terrain, reduce the calculated costs. For enhanced terrain ruler this is handled by envReductions
 					 return calcCost;
 				 }
 			};
@@ -103,15 +114,21 @@ Hooks.once("dragRuler.ready", (SpeedProvider) => {
 	dragRuler.registerModule("pf2e-dragruler", PF2ESpeedProvider) //register the speed provider so its selectable from the drag ruler configuration.
 });
 
+
 Hooks.on('preUpdateCombat', () => {
-	const combat = game.combats.active;
-	const combatant = combat.turns[combat.turn];
-	const previousCombatant = combat.turns[(combat.turn - 1) < 0 ? (combat.turns.length - 1): (combat.turn - 1)];
-	combatant.actor.unsetFlag('pf2e', 'actions');
-	combatant.actor.setFlag('pf2e', 'actions.numActions', 3);
-	previousCombatant.actor.unsetFlag('pf2e', 'actions');
+	const combat = game.combats.active; //set the current combat
+	const combatant = combat.turns[combat.turn]; //find the current combatant
+	const nextCombatant = combat.turns[(combat.turn + 1) > (combat.turns.length - 1) ? 0 : (combat.turn + 1)]; //find the next combatant
+	//const previousCombatant = combat.turns[(combat.turn - 1) > (combat.turns.length - 1) ? 0 : (combat.turn + 1)];
+	combatant.actor.unsetFlag('pf2e', 'actions'); //clear all the action tracking flags from the current combatant.
+	//previousCombatant.actor.unsetFlag('pf2e', 'actions'); //clear all the action tracking flags from the current combatant.
+	nextCombatant.actor.unsetFlag('pf2e', 'actions'); //clear all the action tracking flags from the next combatant. (Proved to be necessary to handle off turn movement.)
+	combatant.actor.setFlag('pf2e', 'actions.numActions', 3); //set the default number of actions as a flag, this way it can be reduced by the spend/restore action macros.
+ if(game.settings.get("drag-ruler", "enableMovementHistory") === true){
 	const flags = {trackedRound: 0, rulerState: null};
-	import("/modules/drag-ruler/src/socket.js").then(module => module.updateCombatantDragRulerFlags(combat, combatant, flags));
+	import("/modules/drag-ruler/src/socket.js").then(module => module.updateCombatantDragRulerFlags(combat, combatant, flags)); //if movement history exists, for the combatant (which is actually the actor whos turn just finished) clears it. Also important for off turn movement.
+	import("/modules/drag-ruler/src/socket.js").then(module => module.updateCombatantDragRulerFlags(combat, nextCombatant, flags)); //if movement history exists, clears it for the next combatant prior to acting. Gives a clean slate for the new turn, important for clearing out off turn movement.
+ };
 });
 
 function cleanSpeed(token) {
@@ -155,6 +172,7 @@ var land = 0; var fly = 0; var swim = 0; var climb = 0; var burrow = 0; var misc
 		var land = parseFloat(token.actor.data.data.details.speed)
 	}
 	//This is were we set up an array of speeds to be made available as the output from this function.
+	// When the speed overhaul of PF2 occurs so long as the final results can be cohereced into this array format everything else will continue to function normally.
 	const speeds = []; // Blank so that we can push things to it.
 	if (land > 0) {speeds.push({id: "land", value: land})}; //If you've got a land speed, add it as an array to the array, which becomes a matrix. JS matrixes are satanic. But don't panic. Or do. Your call.
 	if (fly > 0) {speeds.push({id: "fly", value: fly})}; //If you've got a fly speed add it as an array to the array.
@@ -190,47 +208,50 @@ return {land: land2, fly: fly2, swim: swim2, burrow: burrow2, climb: climb2, mis
 //returns them all as a since simple array, easy to grab from for assigning to our lovely OG variables.
 }
 
+//this function handles determining the type of movment.
 function movementSelect (token) {
 	const tokenElevation = token.data.elevation; //Gives us a way to check if a token is flying
 	var movementType = 'default';
 
-//This logic gate handles flight and burrowing, if the elevation setting is on.
+//This logic gate handles flight and swimming, if the scene environment based movement switching is on.
 if (game.settings.get("pf2e-dragruler", "scene")=== true) {
-	if(canvas.scene.data.flags?.['enhanced-terrain-layer']?.environment == 'sky') {var movementType = 'fly'};
-	if(canvas.scene.data.flags?.['enhanced-terrain-layer']?.environment == 'aquatic'){var movementType = 'swim'};
+	if(canvas.scene.data.flags?.['enhanced-terrain-layer']?.environment == 'sky') {var movementType = 'fly'}; //checks if the scene is set to have a default environment of sky. If so, uses fly speed.
+	if(canvas.scene.data.flags?.['enhanced-terrain-layer']?.environment == 'aquatic'){var movementType = 'swim'}; //checks if the scene is set to have a default environment of aquatic. If so, uses swim speed.
 };
 
+//This logic gate handles flight, burrowing and swimming, if the automatic movment switching is on.
 if (game.settings.get("pf2e-dragruler", "auto")=== true) {
-	if(tokenElevation > 0) {var movementType = 'fly'};
-	if (tokenElevation < 0){var movementType = 'burrow'};
-	if (game.modules.get("enhanced-terrain-layer")?.active){if(canvas.terrain.terrainAt(token.data.x/100,token.data.y/100)[0]?.environment === 'aquatic' || canvas.terrain.terrainAt(token.data.x/100,token.data.y/100)[0]?.environment === 'water'){var movementType = 'swim'}};
+	if(tokenElevation > 0) {var movementType = 'fly'}; //if elevated fly
+	if (tokenElevation < 0){var movementType = 'burrow'}; //if below ground burrow.
+	if (game.modules.get("enhanced-terrain-layer")?.active){if(canvas.terrain.terrainAt(token.data.x/100,token.data.y/100)[0]?.environment === 'aquatic' || canvas.terrain.terrainAt(token.data.x/100,token.data.y/100)[0]?.environment === 'water'){var movementType = 'swim'}}; //switches to swim speed, if the token starts the movement in water or aquatic terrain.
 };
 
-if(token.actor.data.flags.pf2e?.movement?.burrowing === true){var movementType = 'burrow'}
-if(token.actor.data.flags.pf2e?.movement?.climbing === true){var movementType = 'climb'}
-if(token.actor.data.flags.pf2e?.movement?.swimming === true){var movementType = 'swim'}
-if(token.actor.data.flags.pf2e?.movement?.flying === true){var movementType = 'fly'}
+if(token.actor.data.flags.pf2e?.movement?.burrowing === true){var movementType = 'burrow'} //switches to burrowing if the burrow effect is applied to the actor.
+if(token.actor.data.flags.pf2e?.movement?.climbing === true){var movementType = 'climb'} //switches to climbing if the climb effect is applied to the actor.
+if(token.actor.data.flags.pf2e?.movement?.swimming === true){var movementType = 'swim'} //switches to swimming if the swim effect is applied to the actor.
+if(token.actor.data.flags.pf2e?.movement?.flying === true){var movementType = 'fly'} //switches to flying if the fly effect is applied to the actor.
 
 return movementType
 };
 
 function movementSpeed (token) {
-	const tokenSpeed = cleanSpeed(token); //This does most of the heavy lifting.
-	const movement = movementSelect(token);
+	const tokenSpeed = cleanSpeed(token); //This does most of the heavy lifting in terms of giving us all the base speeds for a token.
+	const movement = movementSelect(token); //returns the type of movement to return.
 
 	 //Sets base speed to the default value.
 	if (movement === "burrow") {var baseSpeed = tokenSpeed.find(e => e.id == "burrow")?.value} // If movement type is set to burrowing, sets base speed to burrow speed. If one can be found.
-	else if (movement === "climb") {var baseSpeed = tokenSpeed.find(e => e.id == "climb")?.value}
-	else if (movement === "swim") {var baseSpeed = tokenSpeed.find(e => e.id == "swim")?.value}
-	else if (movement === "fly") {var baseSpeed = tokenSpeed.find(e => e.id == "fly")?.value};
-	if (movement === "default" || baseSpeed === undefined){var baseSpeed = parseFloat(tokenSpeed[0].value)};
+	else if (movement === "climb") {var baseSpeed = tokenSpeed.find(e => e.id == "climb")?.value} // If movement type is set to climbing, sets base speed to climb speed. If one can be found.
+	else if (movement === "swim") {var baseSpeed = tokenSpeed.find(e => e.id == "swim")?.value} // If movement type is set to swimming, sets base speed to swim speed. If one can be found.
+	else if (movement === "fly") {var baseSpeed = tokenSpeed.find(e => e.id == "fly")?.value}; // If movement type is set to flying, sets base speed to fly speed. If one can be found.
+	if (movement === "default" || baseSpeed === undefined){var baseSpeed = parseFloat(tokenSpeed[0].value)}; // if the movement type was not set to one burrow,climb,swim, or fly. Or if no speed of the requested type exists for that actor, returns the land speed.
 
 	return baseSpeed
 
 };
 
+//determines how many actions a token should start with.
 function actionCount (token){
-let numactions = token.actor.data.flags.pf2e?.actions?.numActions ?? 3; //Sets the default number of actions (3) which can then be modified depending on the conditions.
+let numactions = token.actor.data.flags.pf2e?.actions?.numActions ?? 3; //Set the base number of actions to the numActions flag stored in the actor, or the default 3, if that cannot be found.
 const conditions = game.pf2e.ConditionManager.getFlattenedConditions(token.actor.data.items.filter(item => item.type === 'condition' && item.flags.pf2e?.condition)); //Gets a read out of the conditions effecting the actor & converts the condition list into a state that's easier to use.
 
 //This loop handles all changes to number of actions from conditions.
@@ -262,67 +283,85 @@ token.actor.setFlag('pf2e', 'actions.numActions', numactions)
 return numactions
 };
 
+//This function handles tracking how far a token has moved, allowing for drag ruler to consider movements less than a full movement speed as complete.
 function movementTracking (token){
-	const distanceMoved = dragRuler.getMovedDistanceFromToken(token);
-	const baseSpeed = movementSpeed(token);
+	const distanceMoved = dragRuler.getMovedDistanceFromToken(token); //gets how far the token has moved this round.
+	const baseSpeed = movementSpeed(token); //gets the base speed for the token, based on current movement type.
+	var usedActions = 0;
 
+//if movement history is enabled, stores how far a token moved as the maximum range for that movement.
+if(game.settings.get("drag-ruler", "enableMovementHistory") === true){
 	if (distanceMoved > token.actor.data.flags.pf2e?.actions?.action3 && token.actor.data.flags.pf2e?.actions?.action4 === undefined){
-		token.actor.setFlag('pf2e', 'actions.action4', Math.min((baseSpeed*4), distanceMoved));
+		token.actor.setFlag('pf2e', 'actions.action4', Math.min((baseSpeed*4), (token.actor.data.flags.pf2e?.actions?.action3 + baseSpeed), distanceMoved)); //if you moved further than you could have on your third movement action (based on movement history), set your maximum distance as the minimum of your 4* your base speed,
 	}
 	if (distanceMoved > token.actor.data.flags.pf2e?.actions?.action2 && token.actor.data.flags.pf2e?.actions?.action3 === undefined){
-		token.actor.setFlag('pf2e', 'actions.action3', Math.min((baseSpeed*3), distanceMoved));
+		token.actor.setFlag('pf2e', 'actions.action3', Math.min((baseSpeed*3), (token.actor.data.flags.pf2e?.actions?.action2 + baseSpeed), distanceMoved));
 	}
 	if (distanceMoved > token.actor.data.flags.pf2e?.actions?.action1 && token.actor.data.flags.pf2e?.actions?.action2 === undefined){
-		token.actor.setFlag('pf2e', 'actions.action2', Math.min((baseSpeed*2), distanceMoved));
+		token.actor.setFlag('pf2e', 'actions.action2', Math.min((baseSpeed*2), (token.actor.data.flags.pf2e?.actions?.action1 + baseSpeed), distanceMoved));
 	}
 	if (distanceMoved > 0 && token.actor.data.flags.pf2e?.actions?.action1 === undefined) {
 		token.actor.setFlag('pf2e', 'actions.action1', (Math.min(baseSpeed, distanceMoved)));
 	};
 
-	const A1 = token.actor.data.flags.pf2e?.actions?.action1 || baseSpeed;
-	const A2 = token.actor.data.flags.pf2e?.actions?.action2 || (baseSpeed * 2);
-	const A3 = token.actor.data.flags.pf2e?.actions?.action3 || (baseSpeed * 3);
-	const A4 = token.actor.data.flags.pf2e?.actions?.action4 || (baseSpeed * 4);
-
-	var usedActions = 0;
+//If movement history is enabled also determines how many actions of movement have been used.
 	if (token.actor.data.flags.pf2e?.actions?.action4 !== undefined){var usedActions = 4
 	} else if (token.actor.data.flags.pf2e?.actions?.action3 !== undefined) {var usedActions = 3
 	} else if (token.actor.data.flags.pf2e?.actions?.action2 !== undefined) {var usedActions = 2
 	} else if (token.actor.data.flags.pf2e?.actions?.action2 !== undefined) {var usedActions = 1
 	} else {const usedActions = 0};
 
+	//sets the range for each movement as either how far the token moved for that action, or to how far the token moved for the previous action, plus the base speed.
+		const A1 = token.actor.data.flags.pf2e?.actions?.action1 || baseSpeed;
+		const A2 = Math.min(token.actor.data.flags.pf2e?.actions?.action2, (token.actor.data.flags.pf2e?.actions?.action1 + baseSpeed)) || baseSpeed*2;
+		const A3 = Math.min(token.actor.data.flags.pf2e?.actions?.action3 || (token.actor.data.flags.pf2e?.actions?.action2 + baseSpeed)) || baseSpeed*3 ;
+		const A4 = Math.min(token.actor.data.flags.pf2e?.actions?.action4 || (token.actor.data.flags.pf2e?.actions?.action3 + baseSpeed)) || baseSpeed*4;
+		return {A1: A1, A2: A2, A3: A3, A4: A4, usedActions:usedActions}
+	} else {
+	//if movement history isn't enabled set the range for each movement to just the maximum.
+	const A1 =  baseSpeed;
+	const A2 = (baseSpeed * 2);
+	const A3 = (baseSpeed * 3);
+	const A4 = (baseSpeed * 4);
 	return {A1: A1, A2: A2, A3: A3, A4: A4, usedActions:usedActions}
+	}
 }
 
+//handles all the ignore/reduce terrain stuff.
 function envReductions (token){
-	var reduced = [];
-	const movementType = movementSelect(token);
-	const tokenElevation = token.data.elevation
-	var ignoredEnv= Object.keys(token.actor.data.flags.pf2e?.movement?.env?.ignore || {any: false} ).filter(a => token.actor.data.flags.pf2e?.movement?.env?.ignore?.[a]);
-	var reducedEnv= Object.keys(token.actor.data.flags.pf2e?.movement?.env?.reduce || {any: false} ).filter(a => token.actor.data.flags.pf2e?.movement?.env?.reduce?.[a]);
+	var reduced = []; //sets up an array.
+	const movementType = movementSelect(token); //gets type of movement.
+	const tokenElevation = token.data.elevation //gets token elevation.
+	var ignoredEnv= Object.keys(token.actor.data.flags.pf2e?.movement?.env?.ignore || {any: false} ).filter(a => token.actor.data.flags.pf2e?.movement?.env?.ignore?.[a]);  //finds all the flags set by effects asking the actor to ignore a type of terrain.
+	var reducedEnv= Object.keys(token.actor.data.flags.pf2e?.movement?.env?.reduce || {any: false} ).filter(a => token.actor.data.flags.pf2e?.movement?.env?.reduce?.[a]); //finds all the flags set by effects asking the actor to reduce the cost of a type of terrain.
 
-
+	//if enhanced terrain layer isn't active, ignore difficult terrain if the token is elevated or flying.
 	if (game.modules.get("enhanced-terrain-layer")?.active === false && game.settings.get("pf2e-dragruler", "auto") && (tokenElevation !== 0 || movementType === 'fly' === true)) {reduced = "ignore"};
+	// if enhanced terrain layer isn't active and the cost of all terrain should be reduced, set output appropriately.
 	if (game.modules.get("enhanced-terrain-layer")?.active === false && token.actor.data.flags.pf2e?.movement?.reduceTerrain === true) {reduced = "reduce"};
+	// if an actor is set to ignore all difficult terrain set to output appropriately
 	if(token.actor.data.flags.pf2e?.movement?.ignoreTerrain|| token.actor.data.flags.pf2e?.movement?.climbing){reduced = "ignore"};
+	// if an actor is set to respect all difficult terrain regardless of other settings, set the output appropriately.
 	if(token.actor.data.flags.pf2e?.movement?.respectTerrain|| token.actor.data.flags.pf2e?.movement?.climbing){reduced = "respect"};
 
+	//if you are using enhanced terrain layer get the list of obstacles and environments.
 	if (game.modules.get("enhanced-terrain-layer")?.active){
 		const terrainList = canvas.terrain.getObstacles().map(a => a.id);
 		terrainList.concat(canvas.terrain.getEnvironments().map(a => a.id));
+	// So long as reduced hasn't been set to a string by one of the above if statements, proceed to set the cost of terrain
 	if (reduced.length === 0){
-		if (token.actor.data.flags.pf2e?.movement?.reduceTerrain === true) {reducedEnv = terrainList};
-		if(reducedEnv?.find(e => e == 'non-magical')){ if(reducedEnv?.find(e => e == 'magical')) {reducedEnv = terrainList} else{reducedEnv = terrainList.filter(a => a !== 'magical')}};
+		if (token.actor.data.flags.pf2e?.movement?.reduceTerrain === true) {reducedEnv = terrainList}; // If the reduce all flag is raised, set reduce for all environements and obstacles
+		if(reducedEnv?.find(e => e == 'non-magical')){ if(reducedEnv?.find(e => e == 'magical')) {reducedEnv = terrainList} else{reducedEnv = terrainList.filter(a => a !== 'magical')}}; // Lets the flag, non-magical reduce all the cost of all non-magical difficult terrain.
 		for (var i=0, len=reducedEnv?.length||0; i<len; i++){
-			reduced.push({id:reducedEnv[i], value:'-1'})
+			reduced.push({id:reducedEnv[i], value:'-1'}) // sets the value for each of the environments that should have their cost reduced to '-1', which tells enhanced terrain layer to drop their cost by 1.
 		};
 
-		if (ignoredEnv?.find(e => e == 'non-magical')){ if(ignoredEnv?.find(e => e == 'magical')) {ignoredEnv = terrainList} else{ignoredEnv = terrainList.filter(a => a !== 'magical')}};
-		if (movementType === 'burrow') {ignoredEnv = terrainList.filter(a => a !== 'underground')};
-		if (movementType === 'swim' && reduced.find(e => e.id == "water")){reduced.find(e => e.id == "water").value = 1} else if (movementType === 'swim'){reduced.push({id:'water', value:1})};
+		if (ignoredEnv?.find(e => e == 'non-magical')){ if(ignoredEnv?.find(e => e == 'magical')) {ignoredEnv = terrainList} else{ignoredEnv = terrainList.filter(a => a !== 'magical')}}; // Lets the flag, non-magical ignore all the cost of all non-magical difficult terrain.
+		if (movementType === 'burrow') {ignoredEnv = terrainList.filter(a => a !== 'underground')}; //ignore the difficult of underground terrain if you are using a burrow speed.
+		if (movementType === 'swim' && reduced.find(e => e.id == "water")){reduced.find(e => e.id == "water").value = 1} else if (movementType === 'swim'){reduced.push({id:'water', value:1})}; //ignore the difficulty of water if using a swim speed.
 		for (var i=0, len=ignoredEnv?.length||0; i<len; i++){
-			if (reduced.find(e => e.id == ignoredEnv[i])){reduced.find(e => e.id == ignoredEnv[i]).value = 1
-			} else {reduced.push({id:ignoredEnv[i], value:1})};
+			if (reduced.find(e => e.id == ignoredEnv[i])){reduced.find(e => e.id == ignoredEnv[i]).value = 1 //tells enhanced terrain layer to update treat the cost of moving to squares with ignored difficult terrain to 1. (For if the value was already set during the reduce step)
+			} else {reduced.push({id:ignoredEnv[i], value:1})}; // if the environment/obstacle in question hasn't been added to the reduce function yet add it and sets the value to move to those squares to 1.
 		};
 	 };
  };
