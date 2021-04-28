@@ -24,32 +24,33 @@ Hooks.once("init", () => {
 	registerSettings();
 });
 
-Hooks.once("ready", () => {
-	//Once the game is ready, if enhanced terrain layer is active, overwrite the original environment/obstacle lists with a PF2e specific list.
+Hooks.once("canvasInit", () => {
+	//When the canvas intializes the first time after a reload, if enhanced terrain layer is active, overwrite the original environment/obstacle lists with a PF2e specific list.
  if (game.modules.get("enhanced-terrain-layer")?.active){
 	canvas.terrain.getEnvironments = function(){return [
-		{ id: 'aquatic', text: 'Aquatic', icon:'water.png'},
-		{ id: 'arctic', text: 'Arctic', icon:'arctic.png' },
-		{ id: 'coast', text: 'Coast', icon:'coast.png' },
-		{ id: 'desert', text: 'Desert', icon:'desert.png' },
-		{ id: 'forest', text: 'Forest', icon:'forest.png' },
-		{ id: 'hills', text: 'Hills', icon:'' },
-		{ id: 'mountain', text: 'Mountain', icon:'mountain.png' },
-		{ id: 'plains', text: 'Plains', icon:'wheat.png' },
-		{ id: 'sky', text: 'Sky', icon:'' },
-		{ id: 'swamp', text: 'Swamp', icon:'swamp.png' },
-		{ id: 'underground', text: 'Underground', icon:'' },
-		{ id: 'urban', text: 'Urban', icon:'' }];
-	},
-	canvas.terrain.getObstacles = function(){return [
-		{ id: 'current', text: 'Current', icon:'current.png' },
-		{ id: 'crowd', text: 'Crowd', icon:'' },
-		{ id: 'ice', text: 'Ice', icon:'frozen-orb.png'},
-		{ id: 'magical', text: 'Magical', icon:'magic.png' },
-		{ id: 'plants', text: 'Plants', icon:'plants.png' },
-		{ id: 'rubble', text: 'Rubble', icon:'rubble.png' },
-		{ id: 'water', text: 'Water', icon:'swamp2.png' },
-		{ id: 'wind', text: 'Wind', icon:'' }];
+		{ id: 'aquatic', text: 'Aquatic', icon:'systems/pf2e/icons/spells/crashing-wave.webp'},
+		{ id: 'arctic', text: 'Arctic', icon:'systems/pf2e/icons/spells/warped-terrain.webp' },
+		{ id: 'coast', text: 'Coast', icon:'systems/pf2e/icons/features/ancestry/skilled-heritage.webp' },
+		{ id: 'desert', text: 'Desert', icon:'systems/pf2e/icons/spells/tireless-worker.webp' },
+		{ id: 'forest', text: 'Forest', icon:'systems/pf2e/icons/spells/plant-growth.webp' },
+		{ id: 'hills', text: 'Hills', icon:'systems/pf2e/icons/spells/passwall.webp' },
+		{ id: 'mountain', text: 'Mountain', icon:'systems/pf2e/icons/spells/stone-tell.webp' },
+		{ id: 'plains', text: 'Plains', icon:'systems/pf2e/icons/spells/commune-with-nature.webp' },
+		{ id: 'sky', text: 'Sky', icon:'systems/pf2e/icons/spells/darkness.webp' },
+		{ id: 'swamp', text: 'Swamp', icon:'systems/pf2e/icons/spells/blight.webp' },
+		{ id: 'underground', text: 'Underground', icon:'systems/pf2e/icons/spells/dance-of-darkness.webp' },
+		{ id: 'urban', text: 'Urban', icon:'systems/pf2e/icons/spells/pulse-of-the-city.webp' },
+		{ id: 'current', text: 'Current', icon:'systems/pf2e/icons/spells/air-walk.webp', obstacle:true },
+		{ id: 'crowd', text: 'Crowd', icon:'systems/pf2e/icons/spells/tireless-worker.webp' , obstacle:true},
+		{ id: 'furniture', text: 'Furniture', icon:'systems/pf2e/icons/spells/secret-chest.webp', obstacle:true},
+		{ id: 'ice', text: 'Ice', icon:'systems/pf2e/icons/spells/clinging-ice.webp', obstacle:true},
+		{ id: 'incline', text: 'Incline', icon:'systems/pf2e/icons/spells/unimpeded-stride.webp', obstacle:true },
+		{ id: 'magical', text: 'Magical', icon:'systems/pf2e/icons/default-icons/spell.webp', obstacle:true},
+		{ id: 'plants', text: 'Plants', icon:'systems/pf2e/icons/spells/natures-enmity.webp', obstacle:true },
+		{ id: 'rubble', text: 'Rubble', icon:'systems/pf2e/icons/spells/wall-of-stone.webp', obstacle:true },
+		{ id: 'water', text: 'Water', icon:'systems/pf2e/icons/spells/mariners-curse.webp', obstacle:true },
+		{ id: 'wind', text: 'Wind', icon:'systems/pf2e/icons/spells/punishing-winds.webp', obstacle:true }
+	];
 	}
  }
 });
@@ -340,8 +341,9 @@ function envReductions (token){
 
 	//if you are using enhanced terrain layer get the list of obstacles and environments.
 	if (game.modules.get("enhanced-terrain-layer")?.active){
-		const terrainList = canvas.terrain.getObstacles().map(a => a.id);
-		terrainList.concat(canvas.terrain.getEnvironments().map(a => a.id));
+		const terrainlist = canvas.terrain.getEnvironments().map(a => a.id);
+		//const terrainList = canvas.terrain.getObstacles().map(a => a.id);
+		//terrainList.concat(canvas.terrain.getEnvironments().map(a => a.id));
 	// So long as reduced hasn't been set to a string by one of the above if statements, proceed to set the cost of terrain
 	if (reduced.length === 0){
 		if (token.actor.data.flags.pf2e?.movement?.reduceTerrain === true) {reducedEnv = terrainList}; // If the reduce all flag is raised, set reduce for all environements and obstacles
