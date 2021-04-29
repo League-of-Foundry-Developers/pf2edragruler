@@ -120,10 +120,13 @@ Hooks.on('preUpdateCombat', () => {
 	const nextCombatant = combat.turns[(combat.turn + 1) > (combat.turns.length - 1) ? 0 : (combat.turn + 1)]; //find the next combatant
 	combatant.actor.unsetFlag('pf2e', 'actions'); //clear all the action tracking flags from the current combatant.
 	nextCombatant.actor.unsetFlag('pf2e', 'actions'); //clear all the action tracking flags from the next combatant. (Proved to be necessary to handle off turn movement.)
- if(game.settings.get("drag-ruler", "enableMovementHistory") === true){
-	const flags = {trackedRound: 0, rulerState: null};
-	import("/modules/drag-ruler/src/socket.js").then(module => module.updateCombatantDragRulerFlags(combat, combatant, flags)); //if movement history exists, for the combatant (which is actually the actor whos turn just finished) clears it. Also important for off turn movement.
-	import("/modules/drag-ruler/src/socket.js").then(module => module.updateCombatantDragRulerFlags(combat, nextCombatant, flags)); //if movement history exists, clears it for the next combatant prior to acting. Gives a clean slate for the new turn, important for clearing out off turn movement.
+  if(game.settings.get("drag-ruler", "enableMovementHistory") === true){
+	if(combatant?.flags?.dragRuler){
+		import("/modules/drag-ruler/src/movement_tracking.js").then(module => module.resetMovementHistory(combat, combatant._id)); //if movement history exists, for the combatant (which is actually the actor whos turn just finished) clears it. Also important for off turn movement.
+	};
+	if(nextCombatant?.flags?.dragRuler){
+		import("/modules/drag-ruler/src/movement_tracking.js").then(module => module.resetMovementHistory(combat, nextCombatant._id)); //if movement history exists, clears it for the next combatant prior to acting. Gives a clean slate for the new turn, important for clearing out off turn movement.
+	};
  };
 });
 
