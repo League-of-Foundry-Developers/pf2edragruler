@@ -154,7 +154,7 @@ var land = 0; var fly = 0; var swim = 0; var climb = 0; var burrow = 0; var misc
 		if (land === 0 && token.actor.data.data.attributes.speed.value !== undefined) {
 		var miscSpeed = 0; //Set the speed to 0 as a fall back.
 			if (token.actor.data.data.attributes.speed.value !== null && token.actor.data.data.attributes.speed.value !== undefined){
-				var miscSpeed = parseFloat(token.actor.data.data.attributes.speed.value.match(/\d+/)); //in the event we really do have a speed in .value that didn't make it to .total, covert it to a number, and assign it. If the conditions above are both false, speed will be treated as 0, the fallback from above.
+				var miscSpeed = parseFloat(token.actor.data.data.attributes.speed.value.match(/\d+(\.\d+)?/)); //in the event we really do have a speed in .value that didn't make it to .total, covert it to a number, and assign it. If the conditions above are both false, speed will be treated as 0, the fallback from above.
 			}
 		};
 		//What else. Familiars
