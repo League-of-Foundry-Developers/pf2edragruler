@@ -3,6 +3,9 @@
 Integration of the Drag Ruler module (https://github.com/manuelVo/foundryvtt-drag-ruler) for Pathfinder 2e with support for the 3 action economy. 
 With simple action tracking, that can handle the restrained, immobilized, paralyzed, quickened, slowed and stunned conditions. 
 
+Terrain Ruler (https://foundryvtt.com/packages/terrain-ruler) is required for difficult terrain to be recognized. And Drag Ruler now requires SocketLib (https://foundryvtt.com/packages/socketlib)
+Either Enhanced Terrain Layer(https://github.com/ironmonk88/enhanced-terrain-layer) or Terrain Layer (https://foundryvtt.com/packages/TerrainLayer/) are supported as a means to place dificult terrain. Note: The latter two modules are mutally exclusive. 
+
 ![3 Action Example](https://imgur.com/fqtgojg.png)
 
 ![Quickened Example](https://imgur.com/z0Fo1Da.png)
@@ -17,7 +20,7 @@ Drag Ruler now supports customizable colours. The default colours for PF2E integ
 
 Settings exist to automatically switch to use fly speed, if a creature has one, when a token is elevated, and autpmatically switch to burrow speed if a token has negative elevation. This same setting also supports switching to swim speed if you move begins in water, or aquatic terrain. Tokens without the appropriate speed will default to their land speed instead. And will not be treated as flying or swimming for the purposes of difficult terrain. 
 
-A second setting has been added to support Enhanced Terrain Layer's scene environements. When this setting is enabled, if you set a scene environment to Sky, all tokens will use a fly speed if they have one in that scene, and if you set the scene environment to aquatic all tokens will use a swim speed if they have one. Tokens without either speed will default to their land speed instead. And will not be treated as flying or swimming for the purposes of difficult terrain. 
+A second setting has been added to support Enhanced Terrain Layer's  scene environements. When this setting is enabled, if you set a scene environment to Sky, all tokens will use a fly speed if they have one in that scene, and if you set the scene environment to aquatic all tokens will use a swim speed if they have one. Tokens without either speed will default to their land speed instead. And will not be treated as flying or swimming for the purposes of difficult terrain.
 
 You can also tell a token to use its Swim, Fly, Burrow or Climb speed manually by dragging the appropriate effect from the movement types compendium.
 
