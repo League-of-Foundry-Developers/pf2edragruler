@@ -95,7 +95,6 @@ async onMovementHistoryUpdate(tokens){
 	 }
 };
 
-
 getCostForStep(token, area){
 	//this handles all the difficult terrain stuff.
 	var reduced = envReductions(token); //the envReductions functions pulls information about any types of difficult terrain the token should ignore, or reduce the cost of.
@@ -123,22 +122,24 @@ getCostForStep(token, area){
 	dragRuler.registerModule("pf2e-dragruler", PF2ESpeedProvider) //register the speed provider so its selectable from the drag ruler configuration.
 });
 
-Hooks.on('preUpdateCombat', () => {
-	const combat = game.combats.active; //set the current combat
- if(combat?.turns.length > 0){
-	const combatant = combat.turns[combat.turn]; //find the current combatant
-	const nextCombatant = combat.turns[(combat.turn + 1) > (combat.turns.length - 1) ? 0 : (combat.turn + 1)]; //find the next combatant
-	combatant.actor.unsetFlag('pf2e', 'actions'); //clear all the action tracking flags from the current combatant.
-	nextCombatant.actor.unsetFlag('pf2e', 'actions'); //clear all the action tracking flags from the next combatant. (Proved to be necessary to handle off turn movement.)
- if(game.settings.get("drag-ruler", "enableMovementHistory") === true){
-	if(combatant?.flags?.dragRuler){
-		dragRuler.resetMovementHistory(combat, combatant._id); //if movement history exists, for the combatant (which is actually the actor whos turn just finished) clears it. Also important for off turn movement.
+Hooks.on('updateCombat', () => {
+	if(game.user.isGM === true){
+		const combat = game.combats.active; //set the current combat
+		if(combat?.turns.length > 0){
+		 const previousCombatant = combat.turns[(combat.turn - 1) < 0 ? (combat.turns.length - 1) : (combat.turn - 1)];
+		 const nextCombatant = combat.turns[combat.turn]; //find the next combatant
+		 nextCombatant.actor.unsetFlag('pf2e', 'actions'); //clear all the action tracking flags from the next combatant. (Proved to be necessary to handle off turn movement.)
+		 previousCombatant.actor.unsetFlag('pf2e', 'actions');
+		 if(game.settings.get("drag-ruler", "enableMovementHistory") === true){
+		 	if(nextCombatant?.flags?.dragRuler){
+			 dragRuler.resetMovementHistory(combat, nextCombatant._id); //if movement history exists, clears it for the next combatant prior to acting. Gives a clean slate for the new turn, important for clearing out off turn movement.
+		 	};
+			if(previousCombatant?.flags?.dragRuler){
+			 dragRuler.resetMovementHistory(combat, previousCombatant._id); //if movement history exists, clears it for the next combatant prior to acting. Gives a clean slate for the new turn, important for clearing out off turn movement.
+		 	};
+		 };
+		};
 	};
-	if(nextCombatant?.flags?.dragRuler){
-		dragRuler.resetMovementHistory(combat, nextCombatant._id); //if movement history exists, clears it for the next combatant prior to acting. Gives a clean slate for the new turn, important for clearing out off turn movement.
-	};
- };
-};
 });
 
 Hooks.on('preDeleteCombat', () => {
@@ -151,6 +152,7 @@ Hooks.on('preDeleteCombat', () => {
 
 function cleanSpeed(token, type) {
 	//handles speeds for non vehicles
+	if (token.actor.data.type === "character" && type === 'land'){type = 'land-speed'}
 	if (token.actor.data.type !== "vehicle"){
 		for (var i=0, len=token.actor.data.data.attributes.speed.otherSpeeds.length; i<len; i++){
 			//iterates through other speeds, if they exist to find the speed that matches our movement type.
@@ -173,7 +175,7 @@ function cleanSpeed(token, type) {
 //This function handles determining the type of movment. And requests the matching speed.
 function movementSpeed (token) {
 	const tokenElevation = token.data.elevation; //Gives us a way to check if a token is flying
-	var movementType = 'land-speed';
+	var movementType = 'land';
 
 //This logic gate handles flight and swimming, if the scene environment based movement switching is on.
 if (game.settings.get("pf2e-dragruler", "scene")=== true) {
