@@ -16,6 +16,14 @@ game.settings.register("pf2e-dragruler", "scene", {
 	config: true,
 	type: Boolean,
 	default: false
+}),
+game.settings.register("pf2e-dragruler", "partial-move-actions", {
+	name: "Partial Move Actions",
+	hint: "Experimental. If enabled, Drag Ruler's movement history can handle partial movement actions.",
+	scope: "world",
+	config: true,
+	type: Boolean,
+	default: false
 })
 };
 
@@ -88,11 +96,15 @@ if (numactions > 0 && movement.A1 > 0){
 
 async onMovementHistoryUpdate(tokens){
 	//Is called whenever a token's history updates, returns an array of all the tokens that have had updates. Then we iterate through them updating flags.
+ if(game.settings.get("pf2e-dragruler", "partial-move-actions")=== true){
 	for (const token of tokens) {
+		if(token.owner === true){
      const distanceMoved = dragRuler.getMovedDistanceFromToken(token); //gets how far the token has moved this round.
      const baseSpeed = movementSpeed(token).speed; //gets the base speed for the token.
      await setMovementFlags(token, distanceMoved, baseSpeed); //sets the range flags for each action based on the tokens base speed and how far it has already moved. (Handles partial movements as complete ones.)
-	 }
+	  };
+  };
+ };
 };
 
 getCostForStep(token, area){
@@ -123,6 +135,7 @@ getCostForStep(token, area){
 });
 
 Hooks.on('updateCombat', () => {
+ if(game.settings.get("pf2e-dragruler", "partial-move-actions") === true){
 	if(game.user.isGM === true){
 		const combat = game.combats.active; //set the current combat
 		if(combat?.turns.length > 0){
@@ -140,14 +153,17 @@ Hooks.on('updateCombat', () => {
 		 };
 		};
 	};
+ };
 });
 
 Hooks.on('preDeleteCombat', () => {
+ if(game.settings.get("pf2e-dragruler", "partial-move-actions") === true && game.user.isGM === true){
 	const combat = game.combats.active; //sets the combat you're about to delete.
 	for (var i=0, len=combat?.turns.length; i<len; i++){
 		const combatant = combat.turns[i];
 		combatant.actor.unsetFlag('pf2e', 'actions'); //iterates through all the combatants and clears their action flags to make sure that there ranges aren't affected by movement history from a deleted combat.
 	}
+ };
 });
 
 function cleanSpeed(token, type) {
@@ -239,8 +255,7 @@ function movementTracking (token){
 	var usedActions = 0;
 
 //if movement history is enabled, stores how far a token moved as the maximum range for that movement.
-if(game.settings.get("drag-ruler", "enableMovementHistory") === true){
-	setMovementFlags(token, distanceMoved, baseSpeed);
+if(game.settings.get("drag-ruler", "enableMovementHistory") === true && game.settings.get("pf2e-dragruler", "partial-move-actions") === true){
 
 //If movement history is enabled also determines how many actions of movement have been used.
 	if (token.actor.getFlag('pf2e', 'actions.action4') !== undefined){var usedActions = 4
