@@ -40,7 +40,7 @@
             "entity": "Item"
         }
     ],
-    "manifest": "https://raw.githubusercontent.com/League-of-Foundry-Developers/pf2edragruler/main/module.json",
+    "manifest": "https://raw.githubusercontent.com/League-of-Foundry-Developers/pf2edragruler/velara-patch-1/module.json",
     "download": "https://github.com/League-of-Foundry-Developers/pf2edragruler/archive/refs/tags/v0.4.3P.zip",
     "url": "https://github.com/League-of-Foundry-Developers/pf2edragruler"
 }
