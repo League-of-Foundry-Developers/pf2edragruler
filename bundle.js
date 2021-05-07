@@ -39,7 +39,7 @@ Hooks.once("canvasInit", () => {
 		{ id: 'aquatic', text: 'Aquatic', icon:'systems/pf2e/icons/spells/crashing-wave.webp'},
 		{ id: 'arctic', text: 'Arctic', icon:'systems/pf2e/icons/spells/warped-terrain.webp' },
 		{ id: 'coast', text: 'Coast', icon:'systems/pf2e/icons/features/ancestry/skilled-heritage.webp' },
-		{ id: 'desert', text: 'Desert', icon:'systems/pf2e/icons/spells/tireless-worker.webp' },
+		{ id: 'desert', text: 'Desert', icon:'systems/pf2e/icons/spells/dust-storm.webp' },
 		{ id: 'forest', text: 'Forest', icon:'systems/pf2e/icons/spells/plant-growth.webp' },
 		{ id: 'hills', text: 'Hills', icon:'systems/pf2e/icons/spells/passwall.webp' },
 		{ id: 'mountain', text: 'Mountain', icon:'systems/pf2e/icons/spells/stone-tell.webp' },
@@ -203,7 +203,10 @@ if (game.settings.get("pf2e-dragruler", "scene")=== true) {
 if (game.settings.get("pf2e-dragruler", "auto")=== true) {
 	if(tokenElevation > 0) {var movementType = 'fly'}; //if elevated fly
 	if (tokenElevation < 0){var movementType = 'burrow'}; //if below ground burrow.
-	if (game.modules.get("enhanced-terrain-layer")?.active){if(canvas.terrain.terrainAt(token.data.x/100,token.data.y/100)[0]?.environment === 'aquatic' || canvas.terrain.terrainAt(token.data.x/100,token.data.y/100)[0]?.environment === 'water'){var movementType = 'swim'}}; //switches to swim speed, if the token starts the movement in water or aquatic terrain.
+	//if (game.modules.get("enhanced-terrain-layer")?.active){if(canvas.terrain.terrainAt(token.data.x/100,token.data.y/100)[0]?.environment === 'aquatic' || canvas.terrain.terrainAt(token.data.x/100,token.data.y/100)[0]?.environment === 'water'){var movementType = 'swim'}}; //switches to swim speed, if the token starts the movement in water or aquatic terrain.
+	if (game.modules.get("enhanced-terrain-layer")?.active){
+		const tokenPosition = canvas.grid.grid.getGridPositionFromPixels(token.data.x, token.data.y);
+		if(canvas.terrain.terrainAt(tokenPosition[1], tokenPosition[0])[0]?.environment.id === 'aquatic' || canvas.terrain.terrainAt(tokenPosition[1], tokenPosition[0])[0]?.environment.id === 'water'){var movementType = 'swim'}}; //switches to swim speed, if the token starts the movement in water or aquatic terrain.
 };
 
 if(token.actor.data.flags.pf2e?.movement?.burrowing === true){var movementType = 'burrow'} //switches to burrowing if the burrow effect is applied to the actor.
