@@ -170,21 +170,21 @@ function cleanSpeed(token, type) {
 	//handles speeds for non vehicles
 	if (token.actor.data.type === "character" && type === 'land'){type = 'land-speed'}
 	if (token.actor.data.type !== "vehicle"){
-		for (var i=0, len=token.actor.data.data.attributes.speed.otherSpeeds.length; i<len; i++){
+		for (var i=0, len=token.actor.data.data.attributes.speed?.otherSpeeds.length; i<len; i++){
 			//iterates through other speeds, if they exist to find the speed that matches our movement type.
 			if(token.actor.data.data.attributes.speed.otherSpeeds[i].type === type || token.actor.data.data.attributes.speed.otherSpeeds[i].type === type.charAt(0).toUpperCase() + type.slice(1) && token.actor.data.data.attributes.speed.otherSpeeds[i].total !== undefined){
 				return {baseSpeed: token.actor.data.data.attributes.speed.otherSpeeds[i].total, type: type} //if a matching speed if found returns it.
 			}
 		}
-		if(token.actor.data.data.attributes.speed.total !== 0){
+		if(token.actor.data.data.attributes?.speed?.total !== 0 && token.actor.data.data.attributes?.speed?.total !== undefined){
 			//If the speed in question wasn't found above, and the speed total isn't 0 (happens to some npcs who's speed is stored in value instead) returns the speed total. And the type, for NPCs that may be set as something other than land.
-			return {baseSpeed: parseFloat(token.actor.data.data.attributes.speed.total) ??  0, type: token.actor.data.data.attributes.speed?.type ?? 'default' }
+			return {baseSpeed: parseFloat(token.actor.data.data.attributes?.speed?.total) ??  0, type: token.actor.data.data.attributes?.speed?.type ?? 'default' }
 		}	else {
-			return {baseSpeed:parseFloat(token.actor.data.data.attributes.speed?.value?.match(/\d+(\.\d+)?/)) ?? 0, type: 'special' } //pulls out the speed for the value string in the event that the total was 0.
+			return {baseSpeed:parseFloat(token.actor.data.data.attributes?.speed?.value?.match(/\d+(\.\d+)?/)) ?? 0, type: 'special' } //pulls out the speed for the value string in the event that the total was 0.
 		};
 		//handles speeds for vehicles because they're different.
 	} else if (token.actor.data.type === "vehicle"){
-		return {baseSpeed:parseFloat(token.actor.data.data.details.speed), type: 'default'}
+		return {baseSpeed:parseFloat(token.actor.data.data.details?.speed), type: 'default'}
 	}
 };
 
