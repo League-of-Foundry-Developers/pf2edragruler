@@ -12,10 +12,6 @@ Either Enhanced Terrain Layer(https://github.com/ironmonk88/enhanced-terrain-lay
 
 ![Slowed Example](https://imgur.com/49ZJDF6.png)
 
-The integration has been updated with full support for drag ruler's new movement tracking, and will treat a partial movement as an entire move action, and adjust accordingly. Movement tracking, and all action tracking macros only function when there is an active combat.
-
-![MovementTracking](https://user-images.githubusercontent.com/74130268/116287355-87f17200-a74d-11eb-95fb-4d6ba20c7fb3.gif)
-
 Drag Ruler now supports customizable colours. The default colours for PF2E integration should be distinguishable for people with protanopia, deuteranopia, or tritanopia.
 
 Settings exist to automatically switch to use fly speed, if a creature has one, when a token is elevated, and autpmatically switch to burrow speed if a token has negative elevation. This same setting also supports switching to swim speed if you move begins in water, or aquatic terrain. Tokens without the appropriate speed will default to their land speed instead. And will not be treated as flying or swimming for the purposes of difficult terrain. 
@@ -30,6 +26,4 @@ As part of the Enhanced Terrain Layer support, PF2e drag ruler integration inclu
 
 ![image](https://user-images.githubusercontent.com/74130268/116287823-1960e400-a74e-11eb-8338-774d04142b6b.png)
 
-
-Alpha: Rudimentry action tracking macros have been added, bundled in the action tracking compendium. All macros will affect only the active combatant, regardless of which token is selected. This macros allow you spend or restore an action, output the number of remaining actions the current combatant has to chat, or reset a tokens movement history. This feature is still in alpha, so there are some key limitations. Action tracking is not initialized until the first drag ruler call, meaning you cannot expend or restore actions until you begin and cancel a drag, furthermore the remaining action count updates the same way so you'll need to move the token to get an accurate count. Finally, the count occurs at the beginning of the movement in question, so will not count current movement until you begin another drag. 
 
