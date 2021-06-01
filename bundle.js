@@ -81,7 +81,7 @@ getRanges(token){
 	var numactions = actionCount(token); //Use the actionCount function to determine how many actions that token gets each round.
 	var movement = movementTracking(token); //Use the movementTracking function to get how far each movement range should be.
 	const ranges = []; //create blank array to store the ranges in.
-	token.actor.setFlag('pf2e', 'actions.remainingActions', (numactions - movement.usedActions)); //Set a flag with the number of remaining actions, so the number can be called by the player. If drag rulers movement history tracking is off, will not updated based on movement.
+	if(game.settings.get("pf2e-dragruler", "partial-move-actions")=== true){token.actor.setFlag('pf2e', 'actions.remainingActions', (numactions - movement.usedActions))}; //Set a flag with the number of remaining actions, so the number can be called by the player. If drag rulers movement history tracking is off, will not updated based on movement.
 
 if (numactions > 0 && movement.A1 > 0){
 	//Set the ranges for each of our four actions to be given to the drag ruler.
