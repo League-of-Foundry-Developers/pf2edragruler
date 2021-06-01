@@ -2,14 +2,14 @@
     "name": "pf2e-dragruler",
     "title": "PF2E Drag Ruler Integration",
     "description": "Integration of Drag Ruler module (https://github.com/manuelVo/foundryvtt-drag-ruler) for Pathfinder 2e with support for the 3 action enconomy, and quickened, slowed and stunned conditions.",
-    "version": "0.4.6",
+    "version": "0.4.7",
     "author": "Velara [Avery#9136]",
     "packs": [],
     "esmodules": ["./bundle.js"],
     "styles": [],
     "socket": true,
     "systems": ["pf2e"],
-    "compatibleCoreVersion": "0.7.9",
+    "compatibleCoreVersion": "0.7.10",
     "minimumCoreVersion": "0.7.5",
     "dependencies": [
     {
@@ -18,13 +18,6 @@
       "manifest": "https://raw.githubusercontent.com/manuelVo/foundryvtt-drag-ruler/master/module.json"
     }],
     "packs": [
-        {
-          "name": "action-tracking",
-          "label": "Action Tracking",
-          "path": "packs/action-tracking.db",
-          "module": "pf2e-dragruler",
-          "entity": "Macro"
-        },
         {
             "name": "movement-effects",
             "label": "Movement Effects",
@@ -41,7 +34,7 @@
         }
     ],
     "manifest": "https://raw.githubusercontent.com/League-of-Foundry-Developers/pf2edragruler/main/module.json",
-    "download": "https://github.com/League-of-Foundry-Developers/pf2edragruler/archive/refs/tags/v0.4.6.zip",
+    "download": "https://github.com/League-of-Foundry-Developers/pf2edragruler/archive/refs/tags/v0.4.7.zip",
     "url": "https://github.com/League-of-Foundry-Developers/pf2edragruler"
 }
 
