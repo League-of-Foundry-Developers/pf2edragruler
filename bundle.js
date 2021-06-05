@@ -183,26 +183,26 @@ return {speed:tokenSpeed.baseSpeed, type: tokenSpeed.type}
 //determines how many actions a token should start with.
 function actionCount (token){
 let numactions = 3 //Set the base number of actions to the default 3.
-const conditions = game.pf2e.ConditionManager.getFlattenedConditions(token.actor.data.items.filter(item => item.type === 'condition' && item.flags.pf2e?.condition)); //Gets a read out of the conditions effecting the actor & converts the condition list into a state that's easier to use.
-
+//const conditions = game.pf2e.ConditionManager.getFlattenedConditions(token.actor.data.items.filter(item => item.type === 'condition' && item.flags.pf2e?.condition)); //Gets a read out of the conditions effecting the actor & converts the condition list into a state that's easier to use.
+const conditions = token.actor.data.items.filter(item => item.type === 'condition')
 //This loop handles all changes to number of actions from conditions.
 for (var i=0, len=conditions.length; i<len; i++) {
 	//Interates through the conditions.
-	if(conditions[i].name.includes("Quickened") && conditions[i].active === true){
+	if(conditions[i].name.includes("Quickened") && conditions[i].isActive === true){
 		if(numactions !== 0) {numactions = numactions + 1};
 		// Self explanatory. If a token is quickened increases the number of actions.
-	} else if (conditions[i].name.includes("Stunned") && conditions[i].active === true) {
+	} else if (conditions[i].name.includes("Stunned") && conditions[i].isActive === true) {
 		numactions = numactions - conditions[i].value
 		//if you've got the stunned condition reduces the number of actions you can take by your stunned value.
-	} else if (conditions[i].name.includes("Slowed") && conditions[i].active === true) {
+	} else if (conditions[i].name.includes("Slowed") && conditions[i].isActive === true) {
 		numactions = numactions - conditions[i].value
 		//if you've got the slowed condition reduces the number of actions you can take by you stunned value. Note: the conditions[i].active === true is important because stunned will override slowed setting it to inactive but the condition and its value still exist.
 	}
-	else if (conditions[i].name.includes("Immobilized") && conditions[i].active === true) {
+	else if (conditions[i].name.includes("Immobilized") && conditions[i].isActive === true) {
 		numactions = 0
 		//if you've got the immobilized condition sets the number of move actions you can take to 0. This also handles restrained as restrained gives a linked immobilized condition.
 	}
-	else if (conditions[i].name.includes("Paralyzed") && conditions[i].active === true) {
+	else if (conditions[i].name.includes("Paralyzed") && conditions[i].isActive === true) {
 		numactions = 0
 		//if you've got the paralyzed condition sets the number of move actions you can take to 0.
 	}
