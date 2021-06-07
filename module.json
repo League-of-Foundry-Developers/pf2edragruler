@@ -33,7 +33,7 @@
             "entity": "Item"
         }
     ],
-    "manifest": "https://raw.githubusercontent.com/League-of-Foundry-Developers/pf2edragruler/v0.5.0/module.json",
+    "manifest": "https://raw.githubusercontent.com/League-of-Foundry-Developers/pf2edragruler/0.8.6-Compability/module.json",
     "download": "https://github.com/League-of-Foundry-Developers/pf2edragruler/archive/refs/tags/v0.5.0.zip",
     "url": "https://github.com/League-of-Foundry-Developers/pf2edragruler"
 }
