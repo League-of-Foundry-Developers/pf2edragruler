@@ -11,7 +11,7 @@ function registerSettings() {
 // Create the setting for automatically switching movement type based on a scene's environment.
 game.settings.register("pf2e-dragruler", "scene", {
 	name: "Scene Environment Automation",
-	hint: "If enabled, actors in Sky scenes will automatically use fly speed, and those in aquatic terrain will use swim speeds, if an actor does not have a speed, will use their land speed.",
+	hint: "Requires Enhanced Terrain Layer. If enabled, actors in Sky scenes will automatically use fly speed, and those in aquatic terrain will use swim speeds, if an actor does not have a speed, will use their land speed.",
 	scope: "world",
 	config: true,
 	type: Boolean,
@@ -34,7 +34,7 @@ Hooks.once("init", () => {
 Hooks.once("ready", () => {
 if(game.user.isGM === true){
  if (game.settings.get("pf2e-dragruler", "version") < 0.47){
-	ui.notifications.info(`Applying Migration for PF2e Drag Ruler Integration. Please be patient and do not close your game or shut down your server.`, {permanent: !0});
+	ui.notifications.info(`Applying Migration for PF2e Drag Ruler Integration. Please be patient and do not close your game or shut down your server.`);
 	upgradeActors();
  };
 };
@@ -156,7 +156,7 @@ function movementSpeed (token) {
 	var movementType = 'land';
 
 //This logic gate handles flight and swimming, if the scene environment based movement switching is on.
-if (game.settings.get("pf2e-dragruler", "scene")=== true) {
+if (game.settings.get("pf2e-dragruler", "scene") === true && game.modules.get("enhanced-terrain-layer")?.active) {
 	if(canvas.scene.getFlag('enhanced-terrain-layer', 'environment') === 'sky') {var movementType = 'fly'}; //checks if the scene is set to have a default environment of sky. If so, uses fly speed.
 	if(canvas.scene.getFlag('enhanced-terrain-layer', 'environment') === 'aquatic'){var movementType = 'swim'}; //checks if the scene is set to have a default environment of aquatic. If so, uses swim speed.
 };
@@ -269,7 +269,5 @@ async function upgradeActors() {
 	for (const actor of game.actors.entities) {
      actor.unsetFlag('pf2e', 'actions');
 	};
-	game.settings.set("pf2e-dragruler", "version", 0.47), ui.notifications.info(`PF2E-Drag Ruler Integration upgrade to version 0.4.7 completed!`, {
-		permanent: !0
-	})
+	game.settings.set("pf2e-dragruler", "version", 0.47), ui.notifications.info(`PF2E-Drag Ruler Integration upgrade to version 0.4.7 completed!`)
 };
