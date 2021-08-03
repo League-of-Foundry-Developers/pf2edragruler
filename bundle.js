@@ -165,10 +165,9 @@ if (game.settings.get("pf2e-dragruler", "scene")=== true) {
 if (game.settings.get("pf2e-dragruler", "auto")=== true) {
 	if(tokenElevation > 0) {var movementType = 'fly'}; //if elevated fly
 	if (tokenElevation < 0){var movementType = 'burrow'}; //if below ground burrow.
-	//if (game.modules.get("enhanced-terrain-layer")?.active){if(canvas.terrain.terrainAt(token.data.x/100,token.data.y/100)[0]?.environment === 'aquatic' || canvas.terrain.terrainAt(token.data.x/100,token.data.y/100)[0]?.environment === 'water'){var movementType = 'swim'}}; //switches to swim speed, if the token starts the movement in water or aquatic terrain.
-	if (game.modules.get("enhanced-terrain-layer")?.active){
+		if (game.modules.get("enhanced-terrain-layer")?.active){
 		const tokenPosition = canvas.grid.grid.getGridPositionFromPixels(token.data.x, token.data.y);
-		if(canvas.terrain.terrainAt(tokenPosition[1], tokenPosition[0])[0]?.environment.id === 'aquatic' || canvas.terrain.terrainAt(tokenPosition[1], tokenPosition[0])[0]?.environment.id === 'water'){var movementType = 'swim'}}; //switches to swim speed, if the token starts the movement in water or aquatic terrain.
+		if(canvas.terrain.terrainFromGrid(tokenPosition[1], tokenPosition[0])[0]?.environment?.id === 'aquatic' || canvas.terrain.terrainFromGrid(tokenPosition[1], tokenPosition[0])[0]?.environment?.id === 'water'){var movementType = 'swim'}}; //switches to swim speed, if the token starts the movement in water or aquatic terrain.
 };
 
 if(token.actor.data.flags.pf2e?.movement?.burrowing === true){var movementType = 'burrow'} //switches to burrowing if the burrow effect is applied to the actor.
