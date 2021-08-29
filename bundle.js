@@ -134,8 +134,8 @@ function cleanSpeed(token, type) {
 	if (token.actor.data.type !== "vehicle"){
 		for (var i=0, len=token.actor.data.data.attributes.speed?.otherSpeeds.length; i<len; i++){
 			//iterates through other speeds, if they exist to find the speed that matches our movement type.
-			if(token.actor.data.data.attributes.speed.otherSpeeds[i].type === type || token.actor.data.data.attributes.speed.otherSpeeds[i].type === type.charAt(0).toUpperCase() + type.slice(1) && token.actor.data.data.attributes.speed.otherSpeeds[i].total !== undefined){
-				return {baseSpeed: token.actor.data.data.attributes.speed.otherSpeeds[i].total, type: type} //if a matching speed if found returns it.
+			if(token.actor.data.data.attributes.speed.otherSpeeds[i].type.toLowerCase() === type && token.actor.data.data.attributes.speed.otherSpeeds[i].total !== undefined){
+				return {baseSpeed: token.actor.data.data.attributes.speed.otherSpeeds[i].total > 0 ? token.actor.data.data.attributes.speed.otherSpeeds[i].total : parseFloat(token.actor.data.data.attributes?.speed?.otherSpeeds[i].value?.match(/\d+(\.\d+)?/)), type: type} //if a matching speed if found returns it.
 			}
 		}
 		if(token.actor.data.data.attributes?.speed?.total !== 0 && token.actor.data.data.attributes?.speed?.total !== undefined){
@@ -243,7 +243,7 @@ function envReductions (token){
 
 	//if you are using enhanced terrain layer get the list of obstacles and environments.
 	if (game.modules.get("enhanced-terrain-layer")?.active){
-		const terrainlist = canvas.terrain.getEnvironments().map(a => a.id);
+		const terrainList = canvas.terrain.getEnvironments().map(a => a.id);
 	// So long as reduced hasn't been set to a string by one of the above if statements, proceed to set the cost of terrain
 	if (reduced.length === 0){
 		if (token.actor.data.flags.pf2e?.movement?.reduceTerrain === true) {reducedEnv = terrainList}; // If the reduce all flag is raised, set reduce for all environements and obstacles
