@@ -240,28 +240,30 @@ function envReductions (token){
 	// if an actor is set to ignore all difficult terrain set to output appropriately
 	if(token.actor.data.flags.pf2e?.movement?.ignoreTerrain|| token.actor.data.flags.pf2e?.movement?.climbing){reduced = "ignore"};
 	// if an actor is set to respect all difficult terrain regardless of other settings, set the output appropriately.
-	if(token.actor.data.flags.pf2e?.movement?.respectTerrain|| token.actor.data.flags.pf2e?.movement?.climbing){reduced = "respect"};
+	if(token.actor.data.flags.pf2e?.movement?.respectTerrain){reduced = "respect"};
 
 	//if you are using enhanced terrain layer get the list of obstacles and environments.
 	if (game.modules.get("enhanced-terrain-layer")?.active){
 		const terrainList = canvas.terrain.getEnvironments().map(a => a.id);
+
 	// So long as reduced hasn't been set to a string by one of the above if statements, proceed to set the cost of terrain
 	if (reduced.length === 0){
 		if (token.actor.data.flags.pf2e?.movement?.reduceTerrain === true) {reducedEnv = terrainList}; // If the reduce all flag is raised, set reduce for all environements and obstacles
-		if(reducedEnv?.find(e => e == 'non-magical')){ if(reducedEnv?.find(e => e == 'magical')) {reducedEnv = terrainList} else{reducedEnv = terrainList.filter(a => a !== 'magical')}}; // Lets the flag, non-magical reduce all the cost of all non-magical difficult terrain.
 		for (var i=0, len=reducedEnv?.length||0; i<len; i++){
 			reduced.push({id:reducedEnv[i], value:'-1'}) // sets the value for each of the environments that should have their cost reduced to '-1', which tells enhanced terrain layer to drop their cost by 1.
 		};
+		if(reducedEnv?.find(e => e == 'non-magical')){reduced = [{id: 'magical', value:'+0'},{value:'-1', stop:1}]}; // Lets the flag, non-magical reduce all the cost of all non-magical difficult terrain.
 
-		if (ignoredEnv?.find(e => e == 'non-magical')){ if(ignoredEnv?.find(e => e == 'magical')) {ignoredEnv = terrainList} else{ignoredEnv = terrainList.filter(a => a !== 'magical')}}; // Lets the flag, non-magical ignore all the cost of all non-magical difficult terrain.
 		if (movementType === 'burrow') {ignoredEnv = terrainList.filter(a => a !== 'underground')}; //ignore the difficult of underground terrain if you are using a burrow speed.
 		if (movementType === 'swim' && reduced.find(e => e.id == "water")){reduced.find(e => e.id == "water").value = 1} else if (movementType === 'swim'){reduced.push({id:'water', value:1})}; //ignore the difficulty of water if using a swim speed.
 		for (var i=0, len=ignoredEnv?.length||0; i<len; i++){
 			if (reduced.find(e => e.id == ignoredEnv[i])){reduced.find(e => e.id == ignoredEnv[i]).value = 1 //tells enhanced terrain layer to update treat the cost of moving to squares with ignored difficult terrain to 1. (For if the value was already set during the reduce step)
 			} else {reduced.push({id:ignoredEnv[i], value:1})}; // if the environment/obstacle in question hasn't been added to the reduce function yet add it and sets the value to move to those squares to 1.
 		};
+		if(ignoredEnv?.find(e => e == 'non-magical')){reduced = [{id: 'magical', value:'+0'},{value:'-4', stop:1}]}; // Lets the flag, non-magical ignore all the cost of all non-magical difficult terrain.
 	 };
  };
+ window.vel = reduced;
 	return reduced
 };
 
