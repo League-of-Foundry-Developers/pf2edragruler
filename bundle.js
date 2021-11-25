@@ -114,7 +114,8 @@ getCostForStep(token, area){
 			 if (reduced === "respect"){ reduced = [];} // if the token has been set to respect all difficult terrain, set the array of reductions to blank.
 			 const costs = area.map(space => canvas.terrain.cost([space],{tokenId:token.data._id, elevation:tokenElevation, reduce:reduced})); // determine the cost of movement
 		 // Return the maximum of the costs
-			 var calcCost = costs.reduce((max, current) => Math.max(max, current))
+			 var calcCost = costs.reduce((max, current) => Math.max(max, current));
+			 if(token.actor.data.flags.pf2e?.movement?.increaseTerrain === true){calcCost +=1};
 		 } else {
 			 //method for calculating difficult terrain if the old terrain layer module is in use.
 				const costs = area.map(space => canvas.terrain.costGrid[space.y]?.[space.x]?.multiple ?? 1);
