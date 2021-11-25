@@ -11,7 +11,7 @@ function registerSettings() {
 // Create the setting for automatically switching movement type based on a scene's environment.
 game.settings.register("pf2e-dragruler", "scene", {
 	name: "Scene Environment Automation",
-	hint: "If enabled, actors in Sky scenes will automatically use fly speed, and those in aquatic terrain will use swim speeds, if an actor does not have a speed, will use their land speed.",
+	hint: "Requires Enhanced Terrain Layer. If enabled, actors in Sky scenes will automatically use fly speed, and those in aquatic terrain will use swim speeds, if an actor does not have a speed, will use their land speed.",
 	scope: "world",
 	config: true,
 	type: Boolean,
@@ -34,7 +34,7 @@ Hooks.once("init", () => {
 Hooks.once("ready", () => {
 if(game.user.isGM === true){
  if (game.settings.get("pf2e-dragruler", "version") < 0.47){
-	ui.notifications.info(`Applying Migration for PF2e Drag Ruler Integration. Please be patient and do not close your game or shut down your server.`, {permanent: !0});
+	ui.notifications.info(`Applying Migration for PF2e Drag Ruler Integration. Please be patient and do not close your game or shut down your server.`);
 	upgradeActors();
  };
 };
@@ -156,7 +156,7 @@ function movementSpeed (token) {
 	var movementType = 'land';
 
 //This logic gate handles flight and swimming, if the scene environment based movement switching is on.
-if (game.settings.get("pf2e-dragruler", "scene")=== true) {
+if (game.settings.get("pf2e-dragruler", "scene") === true && game.modules.get("enhanced-terrain-layer")?.active) {
 	if(canvas.scene.getFlag('enhanced-terrain-layer', 'environment') === 'sky') {var movementType = 'fly'}; //checks if the scene is set to have a default environment of sky. If so, uses fly speed.
 	if(canvas.scene.getFlag('enhanced-terrain-layer', 'environment') === 'aquatic'){var movementType = 'swim'}; //checks if the scene is set to have a default environment of aquatic. If so, uses swim speed.
 };
@@ -182,26 +182,26 @@ return {speed:tokenSpeed.baseSpeed, type: tokenSpeed.type}
 //determines how many actions a token should start with.
 function actionCount (token){
 let numactions = 3 //Set the base number of actions to the default 3.
-const conditions = game.pf2e.ConditionManager.getFlattenedConditions(token.actor.data.items.filter(item => item.type === 'condition' && item.flags.pf2e?.condition)); //Gets a read out of the conditions effecting the actor & converts the condition list into a state that's easier to use.
-
+//const conditions = game.pf2e.ConditionManager.getFlattenedConditions(token.actor.data.items.filter(item => item.type === 'condition' && item.flags.pf2e?.condition)); //Gets a read out of the conditions effecting the actor & converts the condition list into a state that's easier to use.
+const conditions = token.actor.data.items.filter(item => item.type === 'condition')
 //This loop handles all changes to number of actions from conditions.
 for (var i=0, len=conditions.length; i<len; i++) {
 	//Interates through the conditions.
-	if(conditions[i].name.includes("Quickened") && conditions[i].active === true){
+	if(conditions[i].name.includes("Quickened") && conditions[i].isActive === true){
 		if(numactions !== 0) {numactions = numactions + 1};
 		// Self explanatory. If a token is quickened increases the number of actions.
-	} else if (conditions[i].name.includes("Stunned") && conditions[i].active === true) {
+	} else if (conditions[i].name.includes("Stunned") && conditions[i].isActive === true) {
 		numactions = numactions - conditions[i].value
 		//if you've got the stunned condition reduces the number of actions you can take by your stunned value.
-	} else if (conditions[i].name.includes("Slowed") && conditions[i].active === true) {
+	} else if (conditions[i].name.includes("Slowed") && conditions[i].isActive === true) {
 		numactions = numactions - conditions[i].value
 		//if you've got the slowed condition reduces the number of actions you can take by you stunned value. Note: the conditions[i].active === true is important because stunned will override slowed setting it to inactive but the condition and its value still exist.
 	}
-	else if (conditions[i].name.includes("Immobilized") && conditions[i].active === true) {
+	else if (conditions[i].name.includes("Immobilized") && conditions[i].isActive === true) {
 		numactions = 0
 		//if you've got the immobilized condition sets the number of move actions you can take to 0. This also handles restrained as restrained gives a linked immobilized condition.
 	}
-	else if (conditions[i].name.includes("Paralyzed") && conditions[i].active === true) {
+	else if (conditions[i].name.includes("Paralyzed") && conditions[i].isActive === true) {
 		numactions = 0
 		//if you've got the paralyzed condition sets the number of move actions you can take to 0.
 	}
@@ -268,7 +268,5 @@ async function upgradeActors() {
 	for (const actor of game.actors.entities) {
      actor.unsetFlag('pf2e', 'actions');
 	};
-	game.settings.set("pf2e-dragruler", "version", 0.47), ui.notifications.info(`PF2E-Drag Ruler Integration upgrade to version 0.4.7 completed!`, {
-		permanent: !0
-	})
+	game.settings.set("pf2e-dragruler", "version", 0.47), ui.notifications.info(`PF2E-Drag Ruler Integration upgrade to version 0.4.7 completed!`)
 };
