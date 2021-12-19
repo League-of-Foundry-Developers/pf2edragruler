@@ -16,28 +16,12 @@ game.settings.register("pf2e-dragruler", "scene", {
 	config: true,
 	type: Boolean,
 	default: false
-}),
-game.settings.register("pf2e-dragruler", "version", {
-	name: "Version",
-	scope: "world",
-	config: false,
-	type: Number,
-	default: 0.46
 })
 };
 
 Hooks.once("init", () => {
 	//Wait until the game is initialized, then register the settings created previously.
 	registerSettings();
-});
-
-Hooks.once("ready", () => {
-if(game.user.isGM === true){
- if (game.settings.get("pf2e-dragruler", "version") < 0.47){
-	ui.notifications.info(`Applying Migration for PF2e Drag Ruler Integration. Please be patient and do not close your game or shut down your server.`);
-	upgradeActors();
- };
-};
 });
 
 Hooks.once("canvasInit", () => {
@@ -263,13 +247,6 @@ function envReductions (token){
 		if(ignoredEnv?.find(e => e == 'non-magical')){reduced = [{id: 'magical', value:'+0'},{value:'-4', stop:1}]}; // Lets the flag, non-magical ignore all the cost of all non-magical difficult terrain.
 	 };
  };
- window.vel = reduced;
 	return reduced
 };
 
-async function upgradeActors() {
-	for (const actor of game.actors.entities) {
-     actor.unsetFlag('pf2e', 'actions');
-	};
-	game.settings.set("pf2e-dragruler", "version", 0.47), ui.notifications.info(`PF2E-Drag Ruler Integration upgrade to version 0.4.7 completed!`)
-};
