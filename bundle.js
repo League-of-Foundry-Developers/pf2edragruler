@@ -96,16 +96,27 @@ getCostForStep(token, area){
 			if (game.modules.get("enhanced-terrain-layer")?.active === true){
 				// method for calculating difficult terrain if enhanced terrain layer is active
 			 if (reduced === "respect"){ reduced = [];} // if the token has been set to respect all difficult terrain, set the array of reductions to blank.
+			  if (game.settings.get("enhanced-terrain-layer", "tokens-cause-difficult")) {
+					const preCost = area.map(space => canvas.terrain.cost([space],{tokenId:token.data._id, elevation:tokenElevation, reduce:reduced, verbose:true}));
+					var q = 0;
+					for (let a of preCost[0].details){
+						let f = a.object?.data?.disposition - token.data.disposition;
+				 		if (f != 0 && isNaN(f) != true && a.object?.actor?.size != "tiny") {q = 1}
+						if (game.settings.get("enhanced-terrain-layer", "dead-cause-difficult") && a.object.document.collectionName == "tokens"){
+							const conditions = a.object?.actor?.data?.items?.filter(item => item.type === 'condition');
+							if (conditions.find(e => e.name == "Paralyzed")?.isActive || conditions.find(e => e.name == "Immobilized")?.isActive || conditions.find(e => e.name == "Unconcious")?.isActive || conditions.find(e => e.name == "Dead")?.isActive || conditions.find(e => e.name == "Petrified")?.isActive || a.object?.actor.data.data.attributes.hp.value == 0) {
+								q=1;
+							}
+						};
+					};
+					if (token.actor.size == "tiny"){q = 2}
+					if (q != 1){reduced.push({id:"token", value:1})};
+				}
 			 const costs = area.map(space => canvas.terrain.cost([space],{tokenId:token.data._id, elevation:tokenElevation, reduce:reduced})); // determine the cost of movement
-		 // Return the maximum of the costs
-			 var calcCost = costs.reduce((max, current) => Math.max(max, current));
+			 var calcCost = costs;
 			 if(token.actor.data.flags.pf2e?.movement?.increaseTerrain === true){calcCost +=1};
-		 } else {
-			 //method for calculating difficult terrain if the old terrain layer module is in use.
-				const costs = area.map(space => canvas.terrain.costGrid[space.y]?.[space.x]?.multiple ?? 1);
-				var calcCost = costs.reduce((max, current) => Math.max(max, current));
-			 }
 			 if (reduced === "reduce" && calcCost > 1) {calcCost -= 1} //If the token is set to reduce the cost of all difficult terrain, reduce the calculated costs. For enhanced terrain ruler this is handled by envReductions
+		 }
 			 return calcCost;
 		 }
 	};
@@ -120,14 +131,14 @@ function cleanSpeed(token, type) {
 		for (var i=0, len=token.actor.data.data.attributes.speed?.otherSpeeds.length; i<len; i++){
 			//iterates through other speeds, if they exist to find the speed that matches our movement type.
 			if(token.actor.data.data.attributes.speed.otherSpeeds[i].type.toLowerCase() === type && token.actor.data.data.attributes.speed.otherSpeeds[i].total !== undefined){
-				return {baseSpeed: token.actor.data.data.attributes.speed.otherSpeeds[i].total > 0 ? token.actor.data.data.attributes.speed.otherSpeeds[i].total : parseFloat(token.actor.data.data.attributes?.speed?.otherSpeeds[i].value?.match(/\d+(\.\d+)?/)), type: type} //if a matching speed if found returns it.
+				return {baseSpeed: token.actor.data.data.attributes.speed.otherSpeeds[i].total > 0 ? token.actor.data.data.attributes.speed.otherSpeeds[i].total : parseFloat(token.actor.data.data.attributes?.speed?.otherSpeeds[i].value?.match(/\d+(\.\d+)?/)[0]), type: type} //if a matching speed if found returns it.
 			}
 		}
-		if(token.actor.data.data.attributes?.speed?.total !== 0 && token.actor.data.data.attributes?.speed?.total !== undefined){
+		if(token.actor.data.data.attributes?.speed?.total !== 0 && isNaN(token.actor.data.data.attributes?.speed?.total) == false){
 			//If the speed in question wasn't found above, and the speed total isn't 0 (happens to some npcs who's speed is stored in value instead) returns the speed total. And the type, for NPCs that may be set as something other than land.
 			return {baseSpeed: parseFloat(token.actor.data.data.attributes?.speed?.total) ??  0, type: token.actor.data.data.attributes?.speed?.type ?? 'default' }
 		}	else {
-			return {baseSpeed:parseFloat(token.actor.data.data.attributes?.speed?.value?.match(/\d+(\.\d+)?/)) ?? 0, type: 'special' } //pulls out the speed for the value string in the event that the total was 0.
+			return {baseSpeed:parseFloat(token.actor.data.data.attributes?.speed?.value?.match(/\d+(\.\d+)?/)[0]) ?? 0, type: 'special' } //pulls out the speed for the value string in the event that the total was 0.
 		};
 		//handles speeds for vehicles because they're different.
 	} else if (token.actor.data.type === "vehicle"){
