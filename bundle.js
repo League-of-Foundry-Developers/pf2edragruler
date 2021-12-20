@@ -99,7 +99,8 @@ getCostForStep(token, area){
 			  if (game.settings.get("enhanced-terrain-layer", "tokens-cause-difficult")) {
 					const preCost = area.map(space => canvas.terrain.cost([space],{tokenId:token.data._id, elevation:tokenElevation, reduce:reduced, verbose:true}));
 					var q = 0;
-					for (let a of preCost[0].details){
+					for (let b of preCost){
+					for (let a of b.details){
 						let f = a.object?.data?.disposition - token.data.disposition;
 				 		if (f != 0 && isNaN(f) != true && a.object?.actor?.size != "tiny") {q = 1}
 						if (game.settings.get("enhanced-terrain-layer", "dead-cause-difficult") && a.object.document.collectionName == "tokens"){
@@ -109,11 +110,12 @@ getCostForStep(token, area){
 							}
 						};
 					};
-					if (token.actor.size == "tiny"){q = 2}
-					if (q != 1){reduced.push({id:"token", value:1})};
+				};
+					if (token.actor.size == "tiny"){q = 0}
+					if (q == 0){reduced.push({id:"token", value:1})};
 				}
 			 const costs = area.map(space => canvas.terrain.cost([space],{tokenId:token.data._id, elevation:tokenElevation, reduce:reduced})); // determine the cost of movement
-			 var calcCost = costs;
+			 var calcCost = costs.reduce((max, current) => Math.max(max, current));
 			 if(token.actor.data.flags.pf2e?.movement?.increaseTerrain === true){calcCost +=1};
 			 if (reduced === "reduce" && calcCost > 1) {calcCost -= 1} //If the token is set to reduce the cost of all difficult terrain, reduce the calculated costs. For enhanced terrain ruler this is handled by envReductions
 		 }
