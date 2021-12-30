@@ -140,8 +140,8 @@ function cleanSpeed(token, type) {
 			//If the speed in question wasn't found above, and the speed total isn't 0 (happens to some npcs who's speed is stored in value instead) returns the speed total. And the type, for NPCs that may be set as something other than land.
 			return {baseSpeed: parseFloat(token.actor.data.data.attributes?.speed?.total) ??  0, type: token.actor.data.data.attributes?.speed?.type ?? 'default' }
 		}	else {
-			return {baseSpeed:parseFloat(token.actor.data.data.attributes?.speed?.value?.match(/\d+(\.\d+)?/)[0]) ?? 0, type: 'special' } //pulls out the speed for the value string in the event that the total was 0.
-		};
+			return {baseSpeed:Math.max([parseFloat(token.actor.data.data.attributes?.speed?.value?.match(/\d+(\.\d+)?/)[0]), parseFloat(token.actor.data.data.attributes?.speed?.otherSpeeds[0]?.total), 0].filter(Number)), type: 'special' } //pulls out the speed for the value string in the event that the total was 0. In the event that both the total and value for the land speed are 0, falls back on the first other speed total, should one not exist speed will be 0.
+			};
 		//handles speeds for vehicles because they're different.
 	} else if (token.actor.data.type === "vehicle"){
 		return {baseSpeed:parseFloat(token.actor.data.data.details?.speed), type: 'default'}
@@ -177,33 +177,34 @@ const tokenSpeed = cleanSpeed(token, movementType);
 return {speed:tokenSpeed.baseSpeed, type: tokenSpeed.type}
 };
 
+function conditionFacts (tokenConditions, conditionSlug) {
+	let condition = tokenConditions.find(e => e.slug == conditionSlug)
+	return {condition:condition?.slug, active:condition?.isActive, value: condition?.value  }
+}
 //determines how many actions a token should start with.
 function actionCount (token){
 let numactions = 3 //Set the base number of actions to the default 3.
 //const conditions = game.pf2e.ConditionManager.getFlattenedConditions(token.actor.data.items.filter(item => item.type === 'condition' && item.flags.pf2e?.condition)); //Gets a read out of the conditions effecting the actor & converts the condition list into a state that's easier to use.
 const conditions = token.actor.data.items.filter(item => item.type === 'condition')
 //This loop handles all changes to number of actions from conditions.
-for (var i=0, len=conditions.length; i<len; i++) {
-	//Interates through the conditions.
-	if(conditions[i].name.includes("Quickened") && conditions[i].isActive === true){
-		if(numactions !== 0) {numactions = numactions + 1};
-		// Self explanatory. If a token is quickened increases the number of actions.
-	} else if (conditions[i].name.includes("Stunned") && conditions[i].isActive === true) {
-		numactions = numactions - conditions[i].value
-		//if you've got the stunned condition reduces the number of actions you can take by your stunned value.
-	} else if (conditions[i].name.includes("Slowed") && conditions[i].isActive === true) {
-		numactions = numactions - conditions[i].value
-		//if you've got the slowed condition reduces the number of actions you can take by you stunned value. Note: the conditions[i].active === true is important because stunned will override slowed setting it to inactive but the condition and its value still exist.
-	}
-	else if (conditions[i].name.includes("Immobilized") && conditions[i].isActive === true) {
+const quickened = conditionFacts(conditions, "quickened");
+const stunned = conditionFacts(conditions, "stunned");
+const slowed = conditionFacts(conditions, "slowed");
+const immobilized = conditionFacts(conditions, "immobilized");
+const paralyzed = conditionFacts(conditions, "paralyzed");
+const petrified = conditionFacts(conditions, "petrified");
+const unconcious = conditionFacts(conditions, "unconcious");
+
+if(quickened.active){
+		numactions = numactions + 1};
+		// Self explanatory. If a token is quickened increases the number of actions.}
+if (slowed.active || stunned.active) {
+		numactions = numactions - Math.max ((slowed.value ?? 0), (stunned.value ?? 0))}
+		//if you've got the stunned or slowed condition reduces the number of actions you can take by the larger of the two values, since stunned overrides slowed, but actions lost to stunned count towards the slowed count.
+if (immobilized.active || paralyzed.active || petrified.active || unconcious.active) {
 		numactions = 0
-		//if you've got the immobilized condition sets the number of move actions you can take to 0. This also handles restrained as restrained gives a linked immobilized condition.
+		//if you've got the immobilized, paralyzed or petrified  condition sets the number of move actions you can take to 0. This also handles restrained as restrained gives a linked immobilized condition.
 	}
-	else if (conditions[i].name.includes("Paralyzed") && conditions[i].isActive === true) {
-		numactions = 0
-		//if you've got the paralyzed condition sets the number of move actions you can take to 0.
-	}
-}
 if (numactions < 0) {numactions = 0};
 //You can't have less than 0 actions, if you've managed to get to less than 0, due to being stunned 4 for example, set the number of actions you get to take to 0
 return numactions
@@ -250,7 +251,7 @@ function envReductions (token){
 			reduced.push({id:reducedEnv[i], value:'-1'}) // sets the value for each of the environments that should have their cost reduced to '-1', which tells enhanced terrain layer to drop their cost by 1.
 		};
 		if(reducedEnv?.find(e => e == 'non-magical')){reduced = [{id: 'magical', value:'+0'},{value:'-1', stop:1}]}; // Lets the flag, non-magical reduce all the cost of all non-magical difficult terrain.
-
+		window.vel = reduced;
 		if (movementType === 'burrow') {ignoredEnv = terrainList.filter(a => a !== 'underground')}; //ignore the difficult of underground terrain if you are using a burrow speed.
 		if (movementType === 'swim' && reduced.find(e => e.id == "water")){reduced.find(e => e.id == "water").value = 1} else if (movementType === 'swim'){reduced.push({id:'water', value:1})}; //ignore the difficulty of water if using a swim speed.
 		for (var i=0, len=ignoredEnv?.length||0; i<len; i++){
@@ -262,4 +263,3 @@ function envReductions (token){
  };
 	return reduced
 };
-
