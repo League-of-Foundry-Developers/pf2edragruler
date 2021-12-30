@@ -88,6 +88,7 @@ if (numactions > 0 && movement.A1 > 0){
 getCostForStep(token, area){
 	//this handles all the difficult terrain stuff.
 	var reduced = envReductions(token); //the envReductions functions pulls information about any types of difficult terrain the token should ignore, or reduce the cost of.
+window.vel2 = reduced;
 	//if the token is flying, but the elevation hasn't been modified, treat the elevation as 1, enhanced terrain layer recognizes the token as being affected by air terrain. If the token has been set to respect difficult terrain regardless of usual reductions, treat the elevation as undefined to bypass enhanced terrain rulers ignoring terrain based on elevation. Otherwise treat the token elevation as the tokens actual elevation.
 	if( movementSpeed(token).type === 'fly' && token.data.elevation <= 0){var tokenElevation = 1} else if(reduced === "respect"){var tokenElevation = undefined} else {var tokenElevation = token.data.elevation};
 	// Lookup the cost for each square occupied by the token
@@ -97,7 +98,7 @@ getCostForStep(token, area){
 				// method for calculating difficult terrain if enhanced terrain layer is active
 			 if (reduced === "respect"){ reduced = [];} // if the token has been set to respect all difficult terrain, set the array of reductions to blank.
 			  if (game.settings.get("enhanced-terrain-layer", "tokens-cause-difficult")) {
-					const preCost = area.map(space => canvas.terrain.cost([space],{tokenId:token.data._id, elevation:tokenElevation, reduce:reduced, verbose:true}));
+					const preCost = area.map(space => canvas.terrain.cost([space],{tokenId:token.data._id, elevation:tokenElevation, reduce:reduced.filter(e=>e.id), verbose:true}));
 					var q = 0;
 					for (let b of preCost){
 					for (let a of b.details){
@@ -105,7 +106,7 @@ getCostForStep(token, area){
 				 		if (f != 0 && isNaN(f) != true && a.object?.actor?.size != "tiny") {q = 1}
 						if (game.settings.get("enhanced-terrain-layer", "dead-cause-difficult") && a.object.document.collectionName == "tokens"){
 							const conditions = a.object?.actor?.data?.items?.filter(item => item.type === 'condition');
-							if (conditions.find(e => e.name == "Paralyzed")?.isActive || conditions.find(e => e.name == "Immobilized")?.isActive || conditions.find(e => e.name == "Unconcious")?.isActive || conditions.find(e => e.name == "Dead")?.isActive || conditions.find(e => e.name == "Petrified")?.isActive || a.object?.actor.data.data.attributes.hp.value == 0) {
+							if (conditions.find(e => e.slug == "paralyzed")?.isActive || conditions.find(e => e.slug == "immobilized")?.isActive || conditions.find(e => e.slug == "unconcious")?.isActive || conditions.find(e => e.slug == "dead")?.isActive || conditions.find(e => e.slug == "petrified")?.isActive || a.object?.actor.data.data.attributes.hp.value == 0) {
 								q=1;
 							}
 						};
@@ -114,10 +115,12 @@ getCostForStep(token, area){
 					if (token.actor.size == "tiny"){q = 0}
 					if (q == 0){reduced.push({id:"token", value:1})};
 				}
-			 const costs = area.map(space => canvas.terrain.cost([space],{tokenId:token.data._id, elevation:tokenElevation, reduce:reduced})); // determine the cost of movement
+			 const costs = area.map(space => canvas.terrain.cost([space],{tokenId:token.data._id, elevation:tokenElevation, reduce:reduced.filter(e=>e.id)})); // determine the cost of movement
 			 var calcCost = costs.reduce((max, current) => Math.max(max, current));
+			 window.vel = calcCost;
+			 if (reduced.find(e => e.flag)?.flag == "inm"){calcCost >4 ? calcCost-=4: calcCost=1} else if (reduced.find(e => e.flag)?.flag == "rnm"){calcCost >1 ? calcCost-=1: calcCost = 1}
 			 if(token.actor.data.flags.pf2e?.movement?.increaseTerrain === true){calcCost +=1};
-			 if (reduced === "reduce" && calcCost > 1) {calcCost -= 1} //If the token is set to reduce the cost of all difficult terrain, reduce the calculated costs. For enhanced terrain ruler this is handled by envReductions
+			 if(token.actor.data.flags.pf2e?.movement?.reduceTerrain === true && calcCost > 1) {calcCost -= 1} //If the token is set to reduce the cost of all difficult terrain, reduce the calculated costs. For enhanced terrain ruler this is handled by envReductions
 		 }
 			 return calcCost;
 		 }
@@ -234,30 +237,28 @@ function envReductions (token){
 	//if enhanced terrain layer isn't active, ignore difficult terrain if the token is elevated or flying.
 	if (game.modules.get("enhanced-terrain-layer")?.active === false && game.settings.get("pf2e-dragruler", "auto") && (tokenElevation !== 0 || movementType === 'fly' === true)) {reduced = "ignore"};
 	// if enhanced terrain layer isn't active and the cost of all terrain should be reduced, set output appropriately.
-	if (game.modules.get("enhanced-terrain-layer")?.active === false && token.actor.data.flags.pf2e?.movement?.reduceTerrain === true) {reduced = "reduce"};
-	// if an actor is set to ignore all difficult terrain set to output appropriately
 	if(token.actor.data.flags.pf2e?.movement?.ignoreTerrain|| token.actor.data.flags.pf2e?.movement?.climbing){reduced = "ignore"};
 	// if an actor is set to respect all difficult terrain regardless of other settings, set the output appropriately.
 	if(token.actor.data.flags.pf2e?.movement?.respectTerrain){reduced = "respect"};
 
 	//if you are using enhanced terrain layer get the list of obstacles and environments.
 	if (game.modules.get("enhanced-terrain-layer")?.active){
-		const terrainList = canvas.terrain.getEnvironments().map(a => a.id);
+		//const terrainList = canvas.terrain.getEnvironments().map(a => a.id);
 
 	// So long as reduced hasn't been set to a string by one of the above if statements, proceed to set the cost of terrain
 	if (reduced.length === 0){
-		if (token.actor.data.flags.pf2e?.movement?.reduceTerrain === true) {reducedEnv = terrainList}; // If the reduce all flag is raised, set reduce for all environements and obstacles
+		//if (token.actor.data.flags.pf2e?.movement?.reduceTerrain === true) {reducedEnv = terrainList}; // If the reduce all flag is raised, set reduce for all environements and obstacles
 		for (var i=0, len=reducedEnv?.length||0; i<len; i++){
 			reduced.push({id:reducedEnv[i], value:'-1'}) // sets the value for each of the environments that should have their cost reduced to '-1', which tells enhanced terrain layer to drop their cost by 1.
 		};
-		if(reducedEnv?.find(e => e == 'non-magical')){reduced = [{id: 'magical', value:'+0'},{value:'-1', stop:1}]}; // Lets the flag, non-magical reduce all the cost of all non-magical difficult terrain.
-		if (movementType === 'burrow') {ignoredEnv = terrainList.filter(a => a !== 'underground')}; //ignore the difficult of underground terrain if you are using a burrow speed.
+		if(reducedEnv?.find(e => e == 'non-magical')){reduced = [{flag:'rnm'},{id: 'magical', value:'+1'}]}; // Lets the flag, non-magical reduce all the cost of all non-magical difficult terrain.
+		if (movementType === 'burrow' && reduced.find(e => e.id == "underground")){reduced.find(e => e.id == "underground").value = 1} else if (movementType === 'burrow'){reduced.push({id:'underground', value:1})}; //ignore the difficult of underground terrain if you are using a burrow speed.
 		if (movementType === 'swim' && reduced.find(e => e.id == "water")){reduced.find(e => e.id == "water").value = 1} else if (movementType === 'swim'){reduced.push({id:'water', value:1})}; //ignore the difficulty of water if using a swim speed.
 		for (var i=0, len=ignoredEnv?.length||0; i<len; i++){
 			if (reduced.find(e => e.id == ignoredEnv[i])){reduced.find(e => e.id == ignoredEnv[i]).value = 1 //tells enhanced terrain layer to update treat the cost of moving to squares with ignored difficult terrain to 1. (For if the value was already set during the reduce step)
 			} else {reduced.push({id:ignoredEnv[i], value:1})}; // if the environment/obstacle in question hasn't been added to the reduce function yet add it and sets the value to move to those squares to 1.
 		};
-		if(ignoredEnv?.find(e => e == 'non-magical')){reduced = [{id: 'magical', value:'+0'},{value:'-4', stop:1}]}; // Lets the flag, non-magical ignore all the cost of all non-magical difficult terrain.
+		if(ignoredEnv?.find(e => e == 'non-magical')){reduced = [{flag:"inm"},{id: 'magical', value:'+4'}]}; // Lets the flag, non-magical ignore all the cost of all non-magical difficult terrain.
 	 };
  };
 	return reduced
