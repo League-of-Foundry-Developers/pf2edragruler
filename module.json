@@ -9,8 +9,8 @@
     "styles": [],
     "socket": true,
     "system": ["pf2e"],
-    "compatibleCoreVersion": "9.236",
-    "minimumCoreVersion": "0.8.6",
+    "compatibleCoreVersion": "9",
+    "minimumCoreVersion": "9",
     "dependencies": [
     {
       "name": "drag-ruler",
@@ -34,7 +34,7 @@
         }
     ],
     "manifest": "https://raw.githubusercontent.com/League-of-Foundry-Developers/pf2edragruler/main/module.json",
-    "download": "https://github.com/League-of-Foundry-Developers/pf2edragruler/archive/refs/tags/v0.5.4.zip",
+    "download": "https://github.com/League-of-Foundry-Developers/pf2edragruler/archive/refs/tags/v0.6.0.zip",
     "url": "https://github.com/League-of-Foundry-Developers/pf2edragruler"
 }
 
