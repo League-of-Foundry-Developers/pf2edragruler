@@ -88,7 +88,6 @@ if (numactions > 0 && movement.A1 > 0){
 getCostForStep(token, area){
 	//this handles all the difficult terrain stuff.
 	var reduced = envReductions(token); //the envReductions functions pulls information about any types of difficult terrain the token should ignore, or reduce the cost of.
-window.vel2 = reduced;
 	//if the token is flying, but the elevation hasn't been modified, treat the elevation as 1, enhanced terrain layer recognizes the token as being affected by air terrain. If the token has been set to respect difficult terrain regardless of usual reductions, treat the elevation as undefined to bypass enhanced terrain rulers ignoring terrain based on elevation. Otherwise treat the token elevation as the tokens actual elevation.
 	if( movementSpeed(token).type === 'fly' && token.data.elevation <= 0){var tokenElevation = 1} else if(reduced === "respect"){var tokenElevation = undefined} else {var tokenElevation = token.data.elevation};
 	// Lookup the cost for each square occupied by the token
@@ -106,7 +105,7 @@ window.vel2 = reduced;
 				 		if (f != 0 && isNaN(f) != true && a.object?.actor?.size != "tiny") {q = 1}
 						if (game.settings.get("enhanced-terrain-layer", "dead-cause-difficult") && a.object.document.collectionName == "tokens"){
 							const conditions = a.object?.actor?.data?.items?.filter(item => item.type === 'condition');
-							if (conditions.find(e => e.slug == "paralyzed")?.isActive || conditions.find(e => e.slug == "immobilized")?.isActive || conditions.find(e => e.slug == "unconcious")?.isActive || conditions.find(e => e.slug == "dead")?.isActive || conditions.find(e => e.slug == "petrified")?.isActive || a.object?.actor.data.data.attributes.hp.value == 0) {
+							if (conditions.find(e => e.slug == "paralyzed")?.isActive || conditions.find(e => e.slug == "immobilized")?.isActive || conditions.find(e => e.slug == "unconscious")?.isActive || conditions.find(e => e.slug == "dead")?.isActive || conditions.find(e => e.slug == "petrified")?.isActive || a.object?.actor.data.data.attributes.hp.value == 0) {
 								q=1;
 							}
 						};
@@ -117,7 +116,6 @@ window.vel2 = reduced;
 				}
 			 const costs = area.map(space => canvas.terrain.cost([space],{tokenId:token.data._id, elevation:tokenElevation, reduce:reduced.filter(e=>e.id)})); // determine the cost of movement
 			 var calcCost = costs.reduce((max, current) => Math.max(max, current));
-			 window.vel = calcCost;
 			 if (reduced.find(e => e.flag)?.flag == "inm"){calcCost >4 ? calcCost-=4: calcCost=1} else if (reduced.find(e => e.flag)?.flag == "rnm"){calcCost >1 ? calcCost-=1: calcCost = 1}
 			 if(token.actor.data.flags.pf2e?.movement?.increaseTerrain === true){calcCost +=1};
 			 if(token.actor.data.flags.pf2e?.movement?.reduceTerrain === true && calcCost > 1) {calcCost -= 1} //If the token is set to reduce the cost of all difficult terrain, reduce the calculated costs. For enhanced terrain ruler this is handled by envReductions
@@ -196,7 +194,7 @@ const slowed = conditionFacts(conditions, "slowed");
 const immobilized = conditionFacts(conditions, "immobilized");
 const paralyzed = conditionFacts(conditions, "paralyzed");
 const petrified = conditionFacts(conditions, "petrified");
-const unconcious = conditionFacts(conditions, "unconcious");
+const unconscious = conditionFacts(conditions, "unconscious");
 
 if(quickened.active){
 		numactions = numactions + 1};
@@ -204,7 +202,7 @@ if(quickened.active){
 if (slowed.active || stunned.active) {
 		numactions = numactions - Math.max ((slowed.value ?? 0), (stunned.value ?? 0))}
 		//if you've got the stunned or slowed condition reduces the number of actions you can take by the larger of the two values, since stunned overrides slowed, but actions lost to stunned count towards the slowed count.
-if (immobilized.active || paralyzed.active || petrified.active || unconcious.active) {
+if (immobilized.active || paralyzed.active || petrified.active || unconscious.active) {
 		numactions = 0
 		//if you've got the immobilized, paralyzed or petrified  condition sets the number of move actions you can take to 0. This also handles restrained as restrained gives a linked immobilized condition.
 	}
