@@ -57,7 +57,7 @@ Hooks.once("canvasInit", () => {
 
 Hooks.once("dragRuler.ready", (SpeedProvider) => {
 // When dragruler is ready to go give it all the PF2 specific stuff
-	class PF2ESpeedProvider extends SpeedProvider {
+	class PF2eSpeedProvider extends SpeedProvider {
 //Registers colours for up to four movement actions so colours can be customized for them, and sets defaults
 get colors() {
 	return [
@@ -124,7 +124,7 @@ getCostForStep(token, area){
 		 }
 	};
 };
-	dragRuler.registerModule("pf2e-dragruler", PF2ESpeedProvider) //register the speed provider so its selectable from the drag ruler configuration.
+	dragRuler.registerModule("pf2e-dragruler", PF2eSpeedProvider) //register the speed provider so its selectable from the drag ruler configuration.
 });
 
 function cleanSpeed(token, type) {
