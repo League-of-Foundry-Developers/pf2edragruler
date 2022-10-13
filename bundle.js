@@ -89,7 +89,7 @@ getCostForStep(token, area){
 	//this handles all the difficult terrain stuff.
 	var reduced = envReductions(token); //the envReductions functions pulls information about any types of difficult terrain the token should ignore, or reduce the cost of.
 	//if the token is flying, but the elevation hasn't been modified, treat the elevation as 1, enhanced terrain layer recognizes the token as being affected by air terrain. If the token has been set to respect difficult terrain regardless of usual reductions, treat the elevation as undefined to bypass enhanced terrain rulers ignoring terrain based on elevation. Otherwise treat the token elevation as the tokens actual elevation.
-	if( movementSpeed(token).type === 'fly' && token.data.elevation <= 0){var tokenElevation = 1} else if(reduced === "respect"){var tokenElevation = undefined} else {var tokenElevation = token.data.elevation};
+	if( movementSpeed(token).type === 'fly' && token.elevation <= 0){var tokenElevation = 1} else if(reduced === "respect"){var tokenElevation = undefined} else {var tokenElevation = token.elevation};
 	// Lookup the cost for each square occupied by the token
 	if (reduced === "ignore"){ return 1 } else {
 		//if all difficult terrain is being ignored, skip the whole process and treat the cost per movement as 1.
@@ -97,15 +97,15 @@ getCostForStep(token, area){
 				// method for calculating difficult terrain if enhanced terrain layer is active
 			 if (reduced === "respect"){ reduced = [];} // if the token has been set to respect all difficult terrain, set the array of reductions to blank.
 			  if (game.settings.get("enhanced-terrain-layer", "tokens-cause-difficult")) {
-					const preCost = area.map(space => canvas.terrain.cost([space],{tokenId:token.data._id, elevation:tokenElevation, reduce:reduced.filter(e=>e.id), verbose:true}));
+					const preCost = area.map(space => canvas.terrain.cost([space],{tokenId:token._id, elevation:tokenElevation, reduce:reduced.filter(e=>e.id), verbose:true}));
 					var q = 0;
 					for (let b of preCost){
 					for (let a of b.details){
-						let f = a.object?.data?.disposition - token.data.disposition;
+						let f = a.object?.data?.disposition - token.disposition;
 				 		if (f != 0 && isNaN(f) != true && a.object?.actor?.size != "tiny") {q = 1}
 						if (game.settings.get("enhanced-terrain-layer", "dead-cause-difficult") && a.object.document.collectionName == "tokens"){
 							const conditions = a.object?.actor?.data?.items?.filter(item => item.type === 'condition');
-							if (conditions.find(e => e.slug == "paralyzed")?.isActive || conditions.find(e => e.slug == "immobilized")?.isActive || conditions.find(e => e.slug == "unconscious")?.isActive || conditions.find(e => e.slug == "dead")?.isActive || conditions.find(e => e.slug == "petrified")?.isActive || a.object?.actor.data.data.attributes.hp.value == 0) {
+							if (conditions.find(e => e.slug == "paralyzed")?.isActive || conditions.find(e => e.slug == "immobilized")?.isActive || conditions.find(e => e.slug == "unconscious")?.isActive || conditions.find(e => e.slug == "dead")?.isActive || conditions.find(e => e.slug == "petrified")?.isActive || a.object?.actor.system.attributes.hp.value == 0) {
 								q=1;
 							}
 						};
@@ -114,11 +114,11 @@ getCostForStep(token, area){
 					if (token.actor.size == "tiny"){q = 0}
 					if (q == 0){reduced.push({id:"token", value:1})};
 				}
-			 const costs = area.map(space => canvas.terrain.cost([space],{tokenId:token.data._id, elevation:tokenElevation, reduce:reduced.filter(e=>e.id)})); // determine the cost of movement
+			 const costs = area.map(space => canvas.terrain.cost([space],{tokenId:token._id, elevation:tokenElevation, reduce:reduced.filter(e=>e.id)})); // determine the cost of movement
 			 var calcCost = costs.reduce((max, current) => Math.max(max, current));
 			 if (reduced.find(e => e.flag)?.flag == "inm"){calcCost >4 ? calcCost-=4: calcCost=1} else if (reduced.find(e => e.flag)?.flag == "rnm"){calcCost >1 ? calcCost-=1: calcCost = 1}
-			 if(token.actor.data.flags.pf2e?.movement?.increaseTerrain === true){calcCost +=1};
-			 if(token.actor.data.flags.pf2e?.movement?.reduceTerrain === true && calcCost > 1) {calcCost -= 1} //If the token is set to reduce the cost of all difficult terrain, reduce the calculated costs. For enhanced terrain ruler this is handled by envReductions
+			 if(token.actor.flags.pf2e?.movement?.increaseTerrain === true){calcCost +=1};
+			 if(token.actor.flags.pf2e?.movement?.reduceTerrain === true && calcCost > 1) {calcCost -= 1} //If the token is set to reduce the cost of all difficult terrain, reduce the calculated costs. For enhanced terrain ruler this is handled by envReductions
 		 }
 			 return calcCost;
 		 }
@@ -129,29 +129,29 @@ getCostForStep(token, area){
 
 function cleanSpeed(token, type) {
 	//handles speeds for non vehicles
-	if (token.actor.data.type === "character" && type === 'land'){type = 'land-speed'}
-	if (token.actor.data.type !== "vehicle"){
-		for (var i=0, len=token.actor.data.data.attributes.speed?.otherSpeeds.length; i<len; i++){
+	if (token.actor.type === "character" && type === 'land'){type = 'land-speed'}
+	if (token.actor.type !== "vehicle"){
+		for (var i=0, len=token.actor.system.attributes.speed?.otherSpeeds.length; i<len; i++){
 			//iterates through other speeds, if they exist to find the speed that matches our movement type.
-			if(token.actor.data.data.attributes.speed.otherSpeeds[i].type.toLowerCase() === type && token.actor.data.data.attributes.speed.otherSpeeds[i].total !== undefined){
-				return {baseSpeed: token.actor.data.data.attributes.speed.otherSpeeds[i].total > 0 ? token.actor.data.data.attributes.speed.otherSpeeds[i].total : parseFloat(token.actor.data.data.attributes?.speed?.otherSpeeds[i].value?.match(/\d+(\.\d+)?/)[0]), type: type} //if a matching speed if found returns it.
+			if(token.actor.system.attributes.speed.otherSpeeds[i].type.toLowerCase() === type && token.actor.system.attributes.speed.otherSpeeds[i].total !== undefined){
+				return {baseSpeed: token.actor.system.attributes.speed.otherSpeeds[i].total > 0 ? token.actor.system.attributes.speed.otherSpeeds[i].total : parseFloat(token.actor.system.attributes?.speed?.otherSpeeds[i].value?.match(/\d+(\.\d+)?/)[0]), type: type} //if a matching speed if found returns it.
 			}
 		}
-		if(token.actor.data.data.attributes?.speed?.total !== 0 && isNaN(token.actor.data.data.attributes?.speed?.total) == false){
+		if(token.actor.system.attributes?.speed?.total !== 0 && isNaN(token.actor.system.attributes?.speed?.total) == false){
 			//If the speed in question wasn't found above, and the speed total isn't 0 (happens to some npcs who's speed is stored in value instead) returns the speed total. And the type, for NPCs that may be set as something other than land.
-			return {baseSpeed: parseFloat(token.actor.data.data.attributes?.speed?.total) ??  0, type: token.actor.data.data.attributes?.speed?.type ?? 'default' }
+			return {baseSpeed: parseFloat(token.actor.system.attributes?.speed?.total) ??  0, type: token.actor.system.attributes?.speed?.type ?? 'default' }
 		}	else {
-			return {baseSpeed:Math.max([parseFloat(token.actor.data.data.attributes?.speed?.value?.match(/\d+(\.\d+)?/)[0]), parseFloat(token.actor.data.data.attributes?.speed?.otherSpeeds[0]?.total), 0].filter(Number)), type: 'special' } //pulls out the speed for the value string in the event that the total was 0. In the event that both the total and value for the land speed are 0, falls back on the first other speed total, should one not exist speed will be 0.
+			return {baseSpeed:Math.max([parseFloat(token.actor.system.attributes?.speed?.value?.match(/\d+(\.\d+)?/)[0]), parseFloat(token.actor.system.attributes?.speed?.otherSpeeds[0]?.total), 0].filter(Number)), type: 'special' } //pulls out the speed for the value string in the event that the total was 0. In the event that both the total and value for the land speed are 0, falls back on the first other speed total, should one not exist speed will be 0.
 			};
 		//handles speeds for vehicles because they're different.
-	} else if (token.actor.data.type === "vehicle"){
-		return {baseSpeed:parseFloat(token.actor.data.data.details?.speed), type: 'default'}
+	} else if (token.actor.type === "vehicle"){
+		return {baseSpeed:parseFloat(token.actor.system.details?.speed), type: 'default'}
 	}
 };
 
 //This function handles determining the type of movment. And requests the matching speed.
 function movementSpeed (token) {
-	const tokenElevation = token.data.elevation; //Gives us a way to check if a token is flying
+	const tokenElevation = token.elevation; //Gives us a way to check if a token is flying
 	var movementType = 'land';
 
 //This logic gate handles flight and swimming, if the scene environment based movement switching is on.
@@ -165,14 +165,14 @@ if (game.settings.get("pf2e-dragruler", "auto")=== true) {
 	if(tokenElevation > 0) {var movementType = 'fly'}; //if elevated fly
 	if (tokenElevation < 0){var movementType = 'burrow'}; //if below ground burrow.
 		if (game.modules.get("enhanced-terrain-layer")?.active){
-		const tokenPosition = canvas.grid.grid.getGridPositionFromPixels(token.data.x, token.data.y);
+		const tokenPosition = canvas.grid.grid.getGridPositionFromPixels(token.x, token.y);
 		if(canvas.terrain.terrainFromGrid(tokenPosition[1], tokenPosition[0])[0]?.environment?.id === 'aquatic' || canvas.terrain.terrainFromGrid(tokenPosition[1], tokenPosition[0])[0]?.environment?.id === 'water'){var movementType = 'swim'}}; //switches to swim speed, if the token starts the movement in water or aquatic terrain.
 };
 
-if(token.actor.data.flags.pf2e?.movement?.burrowing === true){var movementType = 'burrow'} //switches to burrowing if the burrow effect is applied to the actor.
-if(token.actor.data.flags.pf2e?.movement?.climbing === true){var movementType = 'climb'} //switches to climbing if the climb effect is applied to the actor.
-if(token.actor.data.flags.pf2e?.movement?.swimming === true){var movementType = 'swim'} //switches to swimming if the swim effect is applied to the actor.
-if(token.actor.data.flags.pf2e?.movement?.flying === true){var movementType = 'fly'} //switches to flying if the fly effect is applied to the actor.
+if(token.actor.flags.pf2e?.movement?.burrowing === true){var movementType = 'burrow'} //switches to burrowing if the burrow effect is applied to the actor.
+if(token.actor.flags.pf2e?.movement?.climbing === true){var movementType = 'climb'} //switches to climbing if the climb effect is applied to the actor.
+if(token.actor.flags.pf2e?.movement?.swimming === true){var movementType = 'swim'} //switches to swimming if the swim effect is applied to the actor.
+if(token.actor.flags.pf2e?.movement?.flying === true){var movementType = 'fly'} //switches to flying if the fly effect is applied to the actor.
 
 const tokenSpeed = cleanSpeed(token, movementType);
 return {speed:tokenSpeed.baseSpeed, type: tokenSpeed.type}
@@ -185,8 +185,8 @@ function conditionFacts (tokenConditions, conditionSlug) {
 //determines how many actions a token should start with.
 function actionCount (token){
 let numactions = 3 //Set the base number of actions to the default 3.
-//const conditions = game.pf2e.ConditionManager.getFlattenedConditions(token.actor.data.items.filter(item => item.type === 'condition' && item.flags.pf2e?.condition)); //Gets a read out of the conditions effecting the actor & converts the condition list into a state that's easier to use.
-const conditions = token.actor.data.items.filter(item => item.type === 'condition')
+//const conditions = game.pf2e.ConditionManager.getFlattenedConditions(token.actor.items.filter(item => item.type === 'condition' && item.flags.pf2e?.condition)); //Gets a read out of the conditions effecting the actor & converts the condition list into a state that's easier to use.
+const conditions = token.actor.items.filter(item => item.type === 'condition')
 //This loop handles all changes to number of actions from conditions.
 const quickened = conditionFacts(conditions, "quickened");
 const stunned = conditionFacts(conditions, "stunned");
@@ -228,16 +228,16 @@ function movementTracking (token){
 function envReductions (token){
 	var reduced = []; //sets up an array.
 	const movementType = movementSpeed(token).type; //gets type of movement.
-	const tokenElevation = token.data.elevation //gets token elevation.
-	var ignoredEnv= Object.keys(token.actor.data.flags.pf2e?.movement?.env?.ignore || {any: false} ).filter(a => token.actor.data.flags.pf2e?.movement?.env?.ignore?.[a]);  //finds all the flags set by effects asking the actor to ignore a type of terrain.
-	var reducedEnv= Object.keys(token.actor.data.flags.pf2e?.movement?.env?.reduce || {any: false} ).filter(a => token.actor.data.flags.pf2e?.movement?.env?.reduce?.[a]); //finds all the flags set by effects asking the actor to reduce the cost of a type of terrain.
+	const tokenElevation = token.elevation //gets token elevation.
+	var ignoredEnv= Object.keys(token.actor.flags.pf2e?.movement?.env?.ignore || {any: false} ).filter(a => token.actor.flags.pf2e?.movement?.env?.ignore?.[a]);  //finds all the flags set by effects asking the actor to ignore a type of terrain.
+	var reducedEnv= Object.keys(token.actor.flags.pf2e?.movement?.env?.reduce || {any: false} ).filter(a => token.actor.flags.pf2e?.movement?.env?.reduce?.[a]); //finds all the flags set by effects asking the actor to reduce the cost of a type of terrain.
 
 	//if enhanced terrain layer isn't active, ignore difficult terrain if the token is elevated or flying.
 	if (game.modules.get("enhanced-terrain-layer")?.active === false && game.settings.get("pf2e-dragruler", "auto") && (tokenElevation !== 0 || movementType === 'fly' === true)) {reduced = "ignore"};
 	// if enhanced terrain layer isn't active and the cost of all terrain should be reduced, set output appropriately.
-	if(token.actor.data.flags.pf2e?.movement?.ignoreTerrain|| token.actor.data.flags.pf2e?.movement?.climbing){reduced = "ignore"};
+	if(token.actor.flags.pf2e?.movement?.ignoreTerrain|| token.actor.flags.pf2e?.movement?.climbing){reduced = "ignore"};
 	// if an actor is set to respect all difficult terrain regardless of other settings, set the output appropriately.
-	if(token.actor.data.flags.pf2e?.movement?.respectTerrain){reduced = "respect"};
+	if(token.actor.flags.pf2e?.movement?.respectTerrain){reduced = "respect"};
 
 	//if you are using enhanced terrain layer get the list of obstacles and environments.
 	if (game.modules.get("enhanced-terrain-layer")?.active){
@@ -245,7 +245,7 @@ function envReductions (token){
 
 	// So long as reduced hasn't been set to a string by one of the above if statements, proceed to set the cost of terrain
 	if (reduced.length === 0){
-		//if (token.actor.data.flags.pf2e?.movement?.reduceTerrain === true) {reducedEnv = terrainList}; // If the reduce all flag is raised, set reduce for all environements and obstacles
+		//if (token.actor.flags.pf2e?.movement?.reduceTerrain === true) {reducedEnv = terrainList}; // If the reduce all flag is raised, set reduce for all environements and obstacles
 		for (var i=0, len=reducedEnv?.length||0; i<len; i++){
 			reduced.push({id:reducedEnv[i], value:'-1'}) // sets the value for each of the environments that should have their cost reduced to '-1', which tells enhanced terrain layer to drop their cost by 1.
 		};

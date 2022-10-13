@@ -1,22 +1,44 @@
 {
-    "name": "pf2e-dragruler",
+    "id": "pf2e-dragruler",
     "title": "PF2E Drag Ruler Integration",
     "description": "Integration of Drag Ruler module (https://github.com/manuelVo/foundryvtt-drag-ruler) for Pathfinder 2e with support for the 3 action enconomy, and quickened, slowed and stunned conditions.",
-    "version": "0.6.1",
-    "author": "Velara [Avery#9136]",
+    "version": "0.7.0",
+    "authors": [
+        {
+            "name": "Velara [Avery#9136]",
+            "flags": {}
+        }
+    ],
     "packs": [],
     "esmodules": ["./bundle.js"],
     "styles": [],
     "socket": true,
     "system": ["pf2e"],
-    "compatibleCoreVersion": "9",
-    "minimumCoreVersion": "9",
-    "dependencies": [
-    {
-      "name": "drag-ruler",
-      "type": "module",
-      "manifest": "https://raw.githubusercontent.com/manuelVo/foundryvtt-drag-ruler/master/module.json"
-    }],
+    "compatibility": {
+        "minimum": "10",
+        "verified": "10.278"
+    },
+    "relationships": {
+        "systems": [
+            {
+                "id": "pf2e",
+                "type": "system",
+                "manifest": "https://github.com/foundryvtt/pf2e/releases/download/latest/system.json",
+                "compatibility": {
+                    "minimum": "4.0.0",
+                    "verified": "4.2.6"
+                }
+            }
+        ],
+        "requires": [
+            {
+                "id": "drag-ruler",
+                "type": "module",
+                "manifest": "https://raw.githubusercontent.com/manuelVo/foundryvtt-drag-ruler/master/module.json"
+            }
+        ]
+
+    },
     "packs": [
         {
             "name": "movement-effects",
