@@ -1,5 +1,5 @@
 {
-  "title": "PF2E Drag Ruler Integration",
+  "title": "PF2e Drag Ruler Integration",
   "version": "0.7.0",
   "description": "Integration of Drag Ruler module (https://github.com/manuelVo/foundryvtt-drag-ruler) for Pathfinder 2e with support for the 3 action enconomy, and conditions.",
   "compatibility":{
