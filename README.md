@@ -13,7 +13,7 @@ Either Enhanced Terrain Layer(https://github.com/ironmonk88/enhanced-terrain-lay
 
 ![Slowed Example](https://imgur.com/49ZJDF6.png)
 
-Drag Ruler now supports customizable colours. The default colours for PF2E integration should be distinguishable for people with protanopia, deuteranopia, or tritanopia.
+Drag Ruler now supports customizable colours. The default colours for PF2e integration should be distinguishable for people with protanopia, deuteranopia, or tritanopia.
 
 Settings exist to automatically switch to use fly speed, if a creature has one, when a token is elevated, and automatically switch to burrow speed if a token has negative elevation. You can also tell a token to use its Swim, Fly, Burrow or Climb speed manually by dragging the appropriate effect from the movement types compendium. Tokens without the appropriate speed will default to their land speed instead. And will not be treated as flying or swimming for the purposes of difficult terrain. 
 
