@@ -1,7 +1,7 @@
 function movementSpeed(token, type) {
 	//handles speeds for non vehicles
-	if (token.actor.system.type === "character" && type === 'land'){type = 'land-speed'}
-	if (token.actor.system.type !== "vehicle"){
+	if (token.actor.type === "character" && type === 'land'){type = 'land-speed'}
+	if (token.actor.type !== "vehicle"){
     let findSpeed = token.actor.system.attributes.speed.otherSpeeds.find(e => e.type == type);
 		if(findSpeed?.total !== undefined){
 				return {speed: findSpeed?.total > 0 ? findSpeed?.total : parseFloat(findSpeed?.breakdown?.match(/\d+(\.\d+)?/)[0]), type: type} //if a matching speed if found returns it.
@@ -12,7 +12,7 @@ function movementSpeed(token, type) {
 			return {speed:Math.max([parseFloat(token.actor.system.attributes?.speed?.breakdown?.match(/\d+(\.\d+)?/)[0]), parseFloat(token.actor.system.attributes?.speed?.otherSpeeds[0]?.total), 0].filter(Number)), type: 'special' } //pulls out the speed for the value string in the event that the total was 0. In the event that both the total and value for the land speed are 0, falls back on the first other speed total, should one not exist speed will be 0.
 		};
 		//handles speeds for vehicles because they're different.
-	} else if (token.actor.system.type === "vehicle"){
+	} else if (token.actor.type === "vehicle"){
 		return {speed:parseFloat(token.actor.system.details?.speed), type: 'default'}
 	}
 };
