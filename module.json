@@ -1,6 +1,6 @@
 {
   "title": "PF2e Drag Ruler Integration",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Integration of Drag Ruler module (https://github.com/manuelVo/foundryvtt-drag-ruler) for Pathfinder 2e with support for the 3 action enconomy, and conditions.",
   "compatibility":{
     "minimum": "10",
@@ -27,7 +27,7 @@
   "esmodules": ["js/main.js"],
   "socket": true,
   "manifest": "https://raw.githubusercontent.com/League-of-Foundry-Developers/pf2edragruler/main/module.json",
-  "download": "https://github.com/League-of-Foundry-Developers/pf2edragruler/archive/refs/tags/v2.0.0.zip",
+  "download": "https://github.com/League-of-Foundry-Developers/pf2edragruler/archive/refs/tags/v2.0.1.zip",
   "url": "https://github.com/League-of-Foundry-Developers/pf2edragruler",
   "id": "pf2e-dragruler",
   "authors": [
