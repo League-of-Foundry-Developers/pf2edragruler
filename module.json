@@ -1,40 +1,56 @@
 {
-    "name": "pf2e-dragruler",
-    "title": "PF2E Drag Ruler Integration",
-    "description": "Integration of Drag Ruler module (https://github.com/manuelVo/foundryvtt-drag-ruler) for Pathfinder 2e with support for the 3 action enconomy, and quickened, slowed and stunned conditions.",
-    "version": "0.6.1",
-    "author": "Velara [Avery#9136]",
-    "packs": [],
-    "esmodules": ["./bundle.js"],
-    "styles": [],
-    "socket": true,
-    "system": ["pf2e"],
-    "compatibleCoreVersion": "9",
-    "minimumCoreVersion": "9",
-    "dependencies": [
+  "title": "PF2e Drag Ruler Integration",
+  "version": "2.0.1",
+  "description": "Integration of Drag Ruler module (https://github.com/manuelVo/foundryvtt-drag-ruler) for Pathfinder 2e with support for the 3 action enconomy, and conditions.",
+  "compatibility":{
+    "minimum": "10",
+    "verified": "10",
+    "maximum": "10"
+  },
+  "authors":
+  {
+    "name":"Avery",
+    "discord": "Avery#9136",
+    "url":"https://www.patreon.com/MercenaryMarketplace"
+  },
+  "packs": [
     {
-      "name": "drag-ruler",
-      "type": "module",
-      "manifest": "https://raw.githubusercontent.com/manuelVo/foundryvtt-drag-ruler/master/module.json"
-    }],
-    "packs": [
-        {
-            "name": "movement-effects",
-            "label": "Movement Effects",
-            "path": "packs/movement-effects.db",
-            "module": "pf2e-dragruler",
-            "entity": "Item"
-        },
-        {
-            "name": "movement-types",
-            "label": "Movement Types",
-            "path": "packs/movement-types.db",
-            "module": "pf2e-dragruler",
-            "entity": "Item"
-        }
+      "name": "movement-types",
+      "label": "Movement Types",
+      "path": "packs/movement-types.db",
+      "type": "Item",
+      "private": false,
+      "system": "pf2e",
+      "flags": {}
+    }
+  ],
+  "esmodules": ["js/main.js"],
+  "socket": true,
+  "manifest": "https://raw.githubusercontent.com/League-of-Foundry-Developers/pf2edragruler/main/module.json",
+  "download": "https://github.com/League-of-Foundry-Developers/pf2edragruler/archive/refs/tags/v2.0.1.zip",
+  "url": "https://github.com/League-of-Foundry-Developers/pf2edragruler",
+  "id": "pf2e-dragruler",
+  "authors": [
+    {
+      "name": "Velara [Avery#9136]",
+      "flags": {}
+    }
+  ],
+  "relationships": {
+    "systems": [
+      {
+        "id": "pf2e",
+        "type": "system",
+        "compatibility": {}
+      }
     ],
-    "manifest": "https://raw.githubusercontent.com/League-of-Foundry-Developers/pf2edragruler/main/module.json",
-    "download": "https://github.com/League-of-Foundry-Developers/pf2edragruler/archive/refs/tags/v0.6.1.zip",
-    "url": "https://github.com/League-of-Foundry-Developers/pf2edragruler"
+    "requires": [
+			{
+				"id": "drag-ruler",
+				"type": "module",
+				"manifest": "https://raw.githubusercontent.com/manuelVo/foundryvtt-drag-ruler/v1.13.0/module.json"
+			}
+		]
+  }
 }
 
