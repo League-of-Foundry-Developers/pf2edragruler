@@ -87,18 +87,19 @@ Hooks.on('updateCombat', () => {
 Hooks.once("enhancedTerrainLayer.ready", (RuleProvider) => {
   class PF2eRuleProvider extends RuleProvider {
     calculateCombinedCost(terrain, options) {
-window.vel = terrain;
-			const token = options.token;
+			const token = options?.token;
+			const tokenElevation = token?.document?.elevation || 0
 			let cost;
-			const movementType = movementTracking(token).type; //gets type of movement.
-			const tokenElevation = token?.document?.elevation //gets token elevation.
+			if(token){
+			var movementType = movementTracking(token).type; //gets type of movement.
+			 //gets token elevation.
 			var ignoredEnv= Object.keys(token.actor.flags.pf2e?.movement?.env?.ignore || {any: false} ).filter(a => token.actor.flags.pf2e?.movement?.env?.ignore?.[a]);  //finds all the flags set by effects asking the actor to ignore a type of terrain.
 			var reducedEnv= Object.keys(token.actor.flags.pf2e?.movement?.env?.reduce || {any: false} ).filter(a => token.actor.flags.pf2e?.movement?.env?.reduce?.[a]); //finds all the flags set by effects asking the actor to reduce the cost of a type of terrain.
-
 			if(token.actor.flags.pf2e?.movement?.ignoreTerrain|| token.actor.flags.pf2e?.movement?.climbing){
 				cost = 1
 			  return cost
 			};
+		}
 //Function for Minus Equal, minimum 1.
       function mem1(a, value){
 				if(a <= value){return 1}
@@ -112,7 +113,7 @@ window.vel = terrain;
 				environments.push(terrain[ii].environment)
 				obstacles.push(terrain[ii].obstacle)
 				costs.push(terrain[ii].cost)
-				if(!token.actor.flags.pf2e?.movement?.respectTerrain){
+				if(token && !token.actor.flags.pf2e?.movement?.respectTerrain){
 				if(reducedEnv?.find(e => e == 'non-magical') && (environments[ii] !== 'magical' || obstacles[ii] !== 'magical')){
 					costs[ii] = mem1(costs[ii],1)
 				}
@@ -123,7 +124,7 @@ window.vel = terrain;
 		  }
 	   }
     // Calculate the cost for this terrain
-		if(!token.actor.flags.pf2e?.movement?.respectTerrain){
+		if(token && !token.actor.flags.pf2e?.movement?.respectTerrain){
 	   for(var i = 0; i < environments.length; i++){
 				if(reducedEnv?.find(e => e == environments[i])||reducedEnv?.find(e => e == obstacles[i])||token.actor.flags.pf2e?.movement?.reduceTerrain){costs[i] = mem1(costs[i],1)}
 				if(ignoredEnv?.find(e => e == environments[i])||ignoredEnv?.find(e => e == obstacles[i])){costs[i]=1}
@@ -133,7 +134,7 @@ window.vel = terrain;
 		}
 		  costs.push(1);
 			cost = Math.max(...costs)
-			if(token.actor.flags.pf2e?.movement?.increaseTerrain){cost += 1}
+			if(token && token.actor.flags.pf2e?.movement?.increaseTerrain){cost += 1}
       return cost;
     }
   }
