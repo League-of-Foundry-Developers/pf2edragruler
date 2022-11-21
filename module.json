@@ -35,6 +35,7 @@
   "esmodules": ["js/main.js"],
   "socket": true,
   "manifest": "https://raw.githubusercontent.com/League-of-Foundry-Developers/pf2edragruler/main/module.json",
+
   "download": "https://github.com/League-of-Foundry-Developers/pf2edragruler/archive/refs/tags/v2.1.0.zip",
   "url": "https://github.com/League-of-Foundry-Developers/pf2edragruler",
   "id": "pf2e-dragruler",
