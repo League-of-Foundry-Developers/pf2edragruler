@@ -5,6 +5,36 @@ Hooks.once("init", () => {
 	//Wait until the game is initialized, then register the settings created previously.
 	registerSettings();
 });
+Hooks.once("canvasInit", () => {
+	//When the canvas intializes the first time after a reload, if enhanced terrain layer is active, overwrite the original environment/obstacle lists with a PF2e specific list.
+ if (game.modules.get("enhanced-terrain-layer")?.active){
+	canvas.terrain.getEnvironments = function(){return [
+		{ id: 'aquatic', text: 'Aquatic', icon:'systems/pf2e/icons/spells/crashing-wave.webp'},
+		{ id: 'arctic', text: 'Arctic', icon:'systems/pf2e/icons/spells/warped-terrain.webp' },
+		{ id: 'coast', text: 'Coast', icon:'systems/pf2e/icons/features/ancestry/skilled-heritage.webp' },
+		{ id: 'desert', text: 'Desert', icon:'systems/pf2e/icons/spells/dust-storm.webp' },
+		{ id: 'forest', text: 'Forest', icon:'systems/pf2e/icons/spells/plant-growth.webp' },
+		{ id: 'hills', text: 'Hills', icon:'systems/pf2e/icons/spells/passwall.webp' },
+		{ id: 'mountain', text: 'Mountain', icon:'systems/pf2e/icons/spells/stone-tell.webp' },
+		{ id: 'plains', text: 'Plains', icon:'systems/pf2e/icons/spells/commune-with-nature.webp' },
+		{ id: 'sky', text: 'Sky', icon:'systems/pf2e/icons/spells/darkness.webp' },
+		{ id: 'swamp', text: 'Swamp', icon:'systems/pf2e/icons/spells/blight.webp' },
+		{ id: 'underground', text: 'Underground', icon:'systems/pf2e/icons/spells/dance-of-darkness.webp' },
+		{ id: 'urban', text: 'Urban', icon:'systems/pf2e/icons/spells/pulse-of-the-city.webp' },
+		{ id: 'current', text: 'Current', icon:'systems/pf2e/icons/spells/air-walk.webp', obstacle:true },
+		{ id: 'crowd', text: 'Crowd', icon:'systems/pf2e/icons/spells/tireless-worker.webp' , obstacle:true},
+		{ id: 'furniture', text: 'Furniture', icon:'systems/pf2e/icons/spells/secret-chest.webp', obstacle:true},
+		{ id: 'ice', text: 'Ice', icon:'systems/pf2e/icons/spells/clinging-ice.webp', obstacle:true},
+		{ id: 'incline', text: 'Incline', icon:'systems/pf2e/icons/spells/unimpeded-stride.webp', obstacle:true },
+		{ id: 'magical', text: 'Magical', icon:'systems/pf2e/icons/default-icons/spell.webp', obstacle:true},
+		{ id: 'plants', text: 'Plants', icon:'systems/pf2e/icons/spells/natures-enmity.webp', obstacle:true },
+		{ id: 'rubble', text: 'Rubble', icon:'systems/pf2e/icons/spells/wall-of-stone.webp', obstacle:true },
+		{ id: 'water', text: 'Water', icon:'systems/pf2e/icons/spells/mariners-curse.webp', obstacle:true },
+		{ id: 'wind', text: 'Wind', icon:'systems/pf2e/icons/spells/punishing-winds.webp', obstacle:true }
+	];
+	}
+ }
+});
 
 Hooks.once("dragRuler.ready", (SpeedProvider) => {
 	class PF2eSpeedProvider extends SpeedProvider {
@@ -52,4 +82,60 @@ Hooks.on('updateCombat', () => {
 		 	};
 		};
  };
+});
+
+Hooks.once("enhancedTerrainLayer.ready", (RuleProvider) => {
+  class PF2eRuleProvider extends RuleProvider {
+    calculateCombinedCost(terrain, options) {
+window.vel = terrain;
+			const token = options.token;
+			let cost;
+			const movementType = movementTracking(token).type; //gets type of movement.
+			const tokenElevation = token?.document?.elevation //gets token elevation.
+			var ignoredEnv= Object.keys(token.actor.flags.pf2e?.movement?.env?.ignore || {any: false} ).filter(a => token.actor.flags.pf2e?.movement?.env?.ignore?.[a]);  //finds all the flags set by effects asking the actor to ignore a type of terrain.
+			var reducedEnv= Object.keys(token.actor.flags.pf2e?.movement?.env?.reduce || {any: false} ).filter(a => token.actor.flags.pf2e?.movement?.env?.reduce?.[a]); //finds all the flags set by effects asking the actor to reduce the cost of a type of terrain.
+
+			if(token.actor.flags.pf2e?.movement?.ignoreTerrain|| token.actor.flags.pf2e?.movement?.climbing){
+				cost = 1
+			  return cost
+			};
+//Function for Minus Equal, minimum 1.
+      function mem1(a, value){
+				if(a <= value){return 1}
+				else{return (a - value)}
+			}
+	    let environments = [];
+			let obstacles = [];
+			let costs = [];
+		for(var ii = 0; ii<terrain.length; ii++) {
+			if(terrain[ii].terrain.document.elevation >= tokenElevation && (terrain[ii].terrain.document.elevation-terrain[ii].terrain.document.depth) <= tokenElevation){
+				environments.push(terrain[ii].environment)
+				obstacles.push(terrain[ii].obstacle)
+				costs.push(terrain[ii].cost)
+				if(!token.actor.flags.pf2e?.movement?.respectTerrain){
+				if(reducedEnv?.find(e => e == 'non-magical') && (environments[ii] !== 'magical' || obstacles[ii] !== 'magical')){
+					costs[ii] = mem1(costs[ii],1)
+				}
+				if(ignoredEnv?.find(e => e == 'non-magical') && (environments[ii] !== 'magical' || obstacles[ii] !== 'magical')){
+					costs[ii] = 1
+				}
+			 }
+		  }
+	   }
+    // Calculate the cost for this terrain
+		if(!token.actor.flags.pf2e?.movement?.respectTerrain){
+	   for(var i = 0; i < environments.length; i++){
+				if(reducedEnv?.find(e => e == environments[i])||reducedEnv?.find(e => e == obstacles[i])||token.actor.flags.pf2e?.movement?.reduceTerrain){costs[i] = mem1(costs[i],1)}
+				if(ignoredEnv?.find(e => e == environments[i])||ignoredEnv?.find(e => e == obstacles[i])){costs[i]=1}
+				if (movementType == 'swim' && obstacles[i] == "water" || movementType == 'swim' && environments[i] == "water" ){costs[i]=1}
+				if (movementType == 'burrow' && obstacles[i] == "underground" || movementType == 'burrow' && environments[i] == "underground" ){costs[i]=1}
+			}
+		}
+		  costs.push(1);
+			cost = Math.max(...costs)
+			if(token.actor.flags.pf2e?.movement?.increaseTerrain){cost += 1}
+      return cost;
+    }
+  }
+  enhancedTerrainLayer.registerModule("pf2e-dragruler", PF2eRuleProvider);
 });

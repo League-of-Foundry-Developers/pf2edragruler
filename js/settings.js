@@ -8,6 +8,14 @@ export function registerSettings() {
 		type: Boolean,
 		default: false
 }),
+game.settings.register("pf2e-dragruler", "scene", {
+	name: "Scene Environment Automation",
+	hint: "Requires Enhanced Terrain Layer. If enabled, actors in Sky scenes will automatically use fly speed, and those in aquatic terrain will use swim speeds, if an actor does not have a speed, will use their land speed.",
+	scope: "world",
+	config: true,
+	type: Boolean,
+	default: false
+}),
 game.settings.register("pf2e-dragruler", "offTurnMovement", {
 	name: "Ignore Off Turn Movement",
 	hint: "Requires movement history to be enabled. Automatically resets movement history at the start of each actor's turn in combat, meaning any movement performed off turn as a reaction won't effect the movement history, on your turn.",
