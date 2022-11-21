@@ -1,6 +1,6 @@
 {
   "title": "PF2e Drag Ruler Integration",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Integration of Drag Ruler module (https://github.com/manuelVo/foundryvtt-drag-ruler) for Pathfinder 2e with support for the 3 action enconomy, and conditions.",
   "compatibility":{
     "minimum": "10",
@@ -10,10 +10,18 @@
   "authors":
   {
     "name":"Avery",
-    "discord": "Avery#9136",
-    "url":"https://www.patreon.com/MercenaryMarketplace"
+    "discord": "Avery#9136"
   },
   "packs": [
+    {
+      "name": "movement-effects",
+      "label": "Movement Effects",
+      "path": "packs/movement-effects.db",
+      "type": "Item",
+      "private": false,
+      "system": "pf2e",
+      "flags": {}
+    },
     {
       "name": "movement-types",
       "label": "Movement Types",
@@ -27,15 +35,9 @@
   "esmodules": ["js/main.js"],
   "socket": true,
   "manifest": "https://raw.githubusercontent.com/League-of-Foundry-Developers/pf2edragruler/main/module.json",
-  "download": "https://github.com/League-of-Foundry-Developers/pf2edragruler/archive/refs/tags/v2.0.1.zip",
+  "download": "https://github.com/League-of-Foundry-Developers/pf2edragruler/archive/refs/tags/v2.0.2.zip",
   "url": "https://github.com/League-of-Foundry-Developers/pf2edragruler",
   "id": "pf2e-dragruler",
-  "authors": [
-    {
-      "name": "Velara [Avery#9136]",
-      "flags": {}
-    }
-  ],
   "relationships": {
     "systems": [
       {
