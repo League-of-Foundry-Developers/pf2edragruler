@@ -109,7 +109,7 @@ Hooks.once("enhancedTerrainLayer.ready", (RuleProvider) => {
 			let obstacles = [];
 			let costs = [];
 		for(var ii = 0; ii<terrain.length; ii++) {
-			if(terrain[ii].object.document.elevation >= tokenElevation && (terrain[ii].object.document.elevation-(terrain[ii].object.document.depth ?? 0)) <= tokenElevation && (token.actor.alliance !== (terrain[ii].object?.actor?.alliance ?? 0))){
+			if(terrain[ii].object.document.elevation >= tokenElevation && (terrain[ii].object.document.elevation-(terrain[ii].object.document.depth ?? 0)) <= tokenElevation && (token?.actor?.alliance ?? "none" !== (terrain[ii].object?.actor?.alliance ?? 0))){
 				environments.push(terrain[ii].environment)
 				obstacles.push(terrain[ii].obstacle)
 				costs.push(terrain[ii].cost)
