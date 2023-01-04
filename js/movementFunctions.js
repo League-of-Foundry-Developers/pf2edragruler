@@ -1,20 +1,22 @@
 function movementSpeed(token, type) {
 	//handles speeds for non vehicles
 	if (token.actor.type === "character" && type === 'land'){type = 'land-speed'}
-	if (token.actor.type !== "vehicle"){
-    let findSpeed = token.actor.system.attributes.speed.otherSpeeds.find(e => e.type == type);
-		if(findSpeed?.total !== undefined){
-				return {speed: findSpeed?.total > 0 ? findSpeed?.total : parseFloat(findSpeed?.breakdown?.match(/\d+(\.\d+)?/)[0]), type: type} //if a matching speed if found returns it.
-    } else if (token.actor.system.attributes?.speed?.total !== 0 && isNaN(token.actor.system.attributes?.speed?.total) == false){
-			//If the speed in question wasn't found above, and the speed total isn't 0 (happens to some npcs who's speed is stored in value instead) returns the speed total. And the type, for NPCs that may be set as something other than land.
-			return {speed: parseFloat(token.actor.system.attributes?.speed?.total) ??  0, type: token.actor.system.attributes?.speed?.type ?? 'default' }
-		}	else {
-			return {speed:Math.max([parseFloat(token.actor.system.attributes?.speed?.breakdown?.match(/\d+(\.\d+)?/)[0]), parseFloat(token.actor.system.attributes?.speed?.otherSpeeds[0]?.total), 0].filter(Number)), type: 'special' } //pulls out the speed for the value string in the event that the total was 0. In the event that both the total and value for the land speed are 0, falls back on the first other speed total, should one not exist speed will be 0.
-		};
-		//handles speeds for vehicles because they're different.
-	} else if (token.actor.type === "vehicle"){
-		return {speed:parseFloat(token.actor.system.details?.speed), type: 'default'}
-	}
+
+	//handles speeds for vehicles because they're different.
+	if (token.actor.type === "vehicle") { return { speed: parseFloat(token.actor.system.details?.speed), type: 'default' } }
+
+	// if actor is a loot or hazard actor speed is not defined
+	if (token.actor.type === "loot" || token.actor.type === "hazard") { return { speed: 0, type: 'default' } }
+
+	let findSpeed = token.actor.system.attributes.speed.otherSpeeds.find(e => e.type == type);
+	if (findSpeed?.total !== undefined) {
+		return { speed: findSpeed?.total > 0 ? findSpeed?.total : parseFloat(findSpeed?.breakdown?.match(/\d+(\.\d+)?/)[0]), type: type } //if a matching speed if found returns it.
+	} else if (token.actor.system.attributes?.speed?.total !== 0 && isNaN(token.actor.system.attributes?.speed?.total) == false) {
+		//If the speed in question wasn't found above, and the speed total isn't 0 (happens to some npcs who's speed is stored in value instead) returns the speed total. And the type, for NPCs that may be set as something other than land.
+		return { speed: parseFloat(token.actor.system.attributes?.speed?.total) ?? 0, type: token.actor.system.attributes?.speed?.type ?? 'default' }
+	} else {
+		return { speed: Math.max([parseFloat(token.actor.system.attributes?.speed?.breakdown?.match(/\d+(\.\d+)?/)[0]), parseFloat(token.actor.system.attributes?.speed?.otherSpeeds[0]?.total), 0].filter(Number)), type: 'special' } //pulls out the speed for the value string in the event that the total was 0. In the event that both the total and value for the land speed are 0, falls back on the first other speed total, should one not exist speed will be 0.
+	};
 };
 
 //This function handles determining the type of movment.
@@ -24,7 +26,7 @@ function getMovementType(token){
   //This logic gate handles flight, burrowing and swimming, if the automatic movment switching is on.
   if (game.settings.get("pf2e-dragruler", "auto")) {
   	if(tokenElevation > 0) {var movementType = 'fly'}; //if elevated fly
-  	if (tokenElevation < 0){var movementType = 'burrow'}; //if below ground burrow.
+	  if (tokenElevation < 0) { var movementType = 'burrow' }; //if below ground burrow.
 		if (game.modules.get("enhanced-terrain-layer")?.active){
 			const tokenPosition = [token.document.x, token.document.y];
 			if(canvas.terrain.terrainFromPixels(tokenPosition[0],tokenPosition[1])[0]?.document?.environment === 'aquatic' || canvas.terrain.terrainFromPixels(tokenPosition[0],tokenPosition[1])[0]?.document?.environment === 'water'|| canvas.terrain.terrainFromPixels(tokenPosition[0],tokenPosition[1])[0]?.document?.obstacle === 'water'){var movementType = 'swim'}
@@ -43,7 +45,7 @@ function getMovementType(token){
   if(token.actor.flags.pf2e?.movement?.flying === true){var movementType = 'fly'} //switches to flying if the fly effect is applied to the actor.
   if(token.actor.flags.pf2e?.movement?.walking === true){var movementType = 'land'}
 
-return movementType;
+	return movementType;
 }
 
 function conditionFacts (tokenConditions, conditionSlug) {
