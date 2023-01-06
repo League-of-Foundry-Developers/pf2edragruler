@@ -2,10 +2,10 @@ function movementSpeed(token, type) {
 	//handles speeds for non vehicles
 	if (token.actor.type === "character" && type === 'land'){type = 'land-speed'}
 	if (token.actor.type !== "vehicle"){
-    let findSpeed = token.actor.system.attributes.speed.otherSpeeds.find(e => e.type == type);
+    let findSpeed = token?.actor?.system?.attributes?.speed?.otherSpeeds.find(e => e.type == type) ?? 0;
 		if(findSpeed?.total !== undefined){
-				return {speed: findSpeed?.total > 0 ? findSpeed?.total : parseFloat(findSpeed?.breakdown?.match(/\d+(\.\d+)?/)[0]), type: type} //if a matching speed if found returns it.
-    } else if (token.actor.system.attributes?.speed?.total !== 0 && isNaN(token.actor.system.attributes?.speed?.total) == false){
+			return {speed: findSpeed?.total > 0 ? findSpeed?.total : parseFloat(findSpeed?.breakdown?.match(/\d+(\.\d+)?/)[0]), type: type} //if a matching speed if found returns it.
+                } else if (token.actor.system.attributes?.speed?.total !== 0 && isNaN(token.actor.system.attributes?.speed?.total) == false){
 			//If the speed in question wasn't found above, and the speed total isn't 0 (happens to some npcs who's speed is stored in value instead) returns the speed total. And the type, for NPCs that may be set as something other than land.
 			return {speed: parseFloat(token.actor.system.attributes?.speed?.total) ??  0, type: token.actor.system.attributes?.speed?.type ?? 'default' }
 		}	else {
