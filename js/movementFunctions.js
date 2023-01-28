@@ -81,7 +81,7 @@ export function movementTracking (token){
 if (game.combats.active && game.settings.get("pf2e-dragruler", "partialMovements") && game.settings.get("drag-ruler", "enableMovementHistory")){
   const combat = game.combats.active
   const combatant = combat.getCombatantByToken(token.id);
-  var moveHistory = combatant.flags?.dragRuler?.passedWaypoints
+  var moveHistory = combatant?.flags?.dragRuler?.passedWaypoints
   if (moveHistory == undefined){
   var A1 = baseSpeed;
   var A2 = baseSpeed*2;
