@@ -15,21 +15,5 @@ game.settings.register("pf2e-dragruler", "scene", {
 	config: true,
 	type: Boolean,
 	default: false
-}),
-game.settings.register("pf2e-dragruler", "offTurnMovement", {
-	name: "Ignore Off Turn Movement",
-	hint: "Requires movement history to be enabled. Automatically resets movement history at the start of each actor's turn in combat, meaning any movement performed off turn as a reaction won't effect the movement history, on your turn.",
-	scope: "world",
-	config: true,
-	type: Boolean,
-	default: false
-}),
-game.settings.register("pf2e-dragruler", "partialMovements", {
-	name: "Partial Movements",
-	hint: "Treat each completed drag as an action, and reduce viable move distance as appropriate",
-	scope: "world",
-	config: true,
-	type: Boolean,
-	default: false
 })
 };
