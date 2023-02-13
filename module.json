@@ -9,15 +9,6 @@
   },
   "packs": [
     {
-      "name": "movement-effects",
-      "label": "Movement Effects",
-      "path": "packs/movement-effects.db",
-      "private": false,
-      "type": "Item",
-      "system": "pf2e",
-      "flags": {}
-    },
-    {
       "name": "movement-types",
       "label": "Movement Types",
       "path": "packs/movement-types.db",
