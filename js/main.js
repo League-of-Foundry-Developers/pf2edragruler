@@ -6,7 +6,7 @@ Hooks.once("init", () => {
 	registerSettings();
 });
 Hooks.once("ready", () => {
-	if (game.modules.get("terrain-ruler").active){
+	if (game.modules.get("terrain-ruler")?.active){
 		ui.notifications.warn("Terrain Ruler Detected - You may experience crashes, deactivation recommended");
 	}
 });
