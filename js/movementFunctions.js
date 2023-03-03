@@ -31,6 +31,12 @@ function getMovementType(token){
 		} //switches to swim speed, if the token starts the movement in water or aquatic terrain.
 	};
 
+	//This logic gate handles flight and swimming, if the scene environment based movement switching is on.
+	if (game.settings.get("pf2e-dragruler", "scene") === true && game.modules.get("enhanced-terrain-layer")?.active) {
+		if(canvas.scene.getFlag('enhanced-terrain-layer', 'environment') === 'sky') {var movementType = 'fly'}; //checks if the scene is set to have a default environment of sky. If so, uses fly speed.
+		if(canvas.scene.getFlag('enhanced-terrain-layer', 'environment') === 'aquatic'){var movementType = 'swim'}; //checks if the scene is set to have a default environment of aquatic. If so, uses swim speed.
+	};
+
   if(token.actor.flags.pf2e?.movement?.burrowing === true){var movementType = 'burrow'} //switches to burrowing if the burrow effect is applied to the actor.
   if(token.actor.flags.pf2e?.movement?.climbing === true){var movementType = 'climb'} //switches to climbing if the climb effect is applied to the actor.
   if(token.actor.flags.pf2e?.movement?.swimming === true){var movementType = 'swim'} //switches to swimming if the swim effect is applied to the actor.
@@ -72,10 +78,42 @@ export function movementTracking (token){
   const movementType = getMovementType(token);
 	const baseSpeed = movementSpeed(token, movementType).speed; //gets the base speed for the token, based on current movement type.
 	var usedActions = 0;
+if (game.combats.active && game.settings.get("pf2e-dragruler", "partialMovements") && game.settings.get("drag-ruler", "enableMovementHistory")){
+  const combat = game.combats.active
+  const combatant = combat.getCombatantByToken(token.id);
+  var moveHistory = combatant.flags?.dragRuler?.passedWaypoints
+  if (moveHistory == undefined){
+  var A1 = baseSpeed;
+  var A2 = baseSpeed*2;
+  var A3 = baseSpeed*3;
+  var A4 = baseSpeed*4;
+} else{
+const P1 = moveHistory[0]?.dragRulerVisitedSpaces[moveHistory[0]?.dragRulerVisitedSpaces?.length-1||0]?.distance;
+let moves1 = (P1-baseSpeed) > 0 ? 1:0;
+moves1=(P1-2*baseSpeed)>0 ? 2:moves1;
+const P2 = moveHistory[1]?.dragRulerVisitedSpaces[moveHistory[1]?.dragRulerVisitedSpaces?.length-1||0]?.distance;
+let moves2 = (P2-baseSpeed) > 0 ? 1:0;
+const P3 = moveHistory[2]?.dragRulerVisitedSpaces[moveHistory[2]?.dragRulerVisitedSpaces?.length-1||0]?.distance;
+const P4 = moveHistory[3]?.dragRulerVisitedSpaces[moveHistory[3]?.dragRulerVisitedSpaces?.length-1||0]?.distance;
+
+  var A1 = Math.min(P1 || baseSpeed, baseSpeed);
+  var A2 = Math.min(baseSpeed+A1, (P1-baseSpeed) > 0 ? P1:P2+A1 || baseSpeed*2)
+  var A3 = Math.min(baseSpeed+A2, (P2-baseSpeed) > 0 ? P2+A1:P3+A2 || baseSpeed*3, (P1-baseSpeed*2) > 0 ? P1:baseSpeed*3, moves1==1?(P2||baseSpeed)+A2:baseSpeed*3)
+  var A4 = Math.min(baseSpeed+A3, (P3-baseSpeed) > 0 ? P3+A2:P4+A3 || baseSpeed*4, (P2-baseSpeed*2) > 0 ? P2+A1:baseSpeed*4, (P1-baseSpeed*3) > 0 ? P1:baseSpeed*4, moves1==2?(P2||baseSpeed)+A2:baseSpeed*4, moves2==1?(P3||baseSpeed)+A3:baseSpeed*4)
+}
+}else{
   	//sets the range for each movement as either how far the token moved for that action, or to how far the token moved for the previous action, plus the base speed.
   		var A1 = baseSpeed;
   		var A2 = baseSpeed*2;
   		var A3 = baseSpeed*3;
   		var A4 = baseSpeed*4;
+    }game.settings.register("pf2e-dragruler", "offTurnMovement", {
+			name: "Ignore Off Turn Movement",
+			hint: "Requires movement history to be enabled. Automatically resets movement history at the start of each actor's turn in combat, meaning any movement performed off turn as a reaction won't effect the movement history, on your turn.",
+			scope: "world",
+			config: true,
+			type: Boolean,
+			default: false
+		})
 	return {A1: A1, A2: A2, A3: A3, A4: A4, usedActions:usedActions, type:movementType}
 };
