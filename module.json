@@ -7,11 +7,12 @@
     "verified": "10",
     "maximum": "10"
   },
-  "authors":
+  "authors":[
   {
     "name":"Avery",
     "discord": "Avery#9136"
-  },
+  }
+  ],
   "packs": [
     {
       "name": "movement-effects",
