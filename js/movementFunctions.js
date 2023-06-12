@@ -108,8 +108,8 @@ const P4 = moveHistory[3]?.dragRulerVisitedSpaces[moveHistory[3]?.dragRulerVisit
   		var A3 = baseSpeed*3;
   		var A4 = baseSpeed*4;
     }game.settings.register("pf2e-dragruler", "offTurnMovement", {
-			name: "Ignore Off Turn Movement",
-			hint: "Requires movement history to be enabled. Automatically resets movement history at the start of each actor's turn in combat, meaning any movement performed off turn as a reaction won't effect the movement history, on your turn.",
+			name: game.i18n.localize("pf2e-dragruler.settings.offTurnMovement.name"),
+			hint: game.i18n.localize("pf2e-dragruler.settings.offTurnMovement.hint"),
 			scope: "world",
 			config: true,
 			type: Boolean,
