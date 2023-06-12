@@ -107,13 +107,6 @@ const P4 = moveHistory[3]?.dragRulerVisitedSpaces[moveHistory[3]?.dragRulerVisit
   		var A2 = baseSpeed*2;
   		var A3 = baseSpeed*3;
   		var A4 = baseSpeed*4;
-    }game.settings.register("pf2e-dragruler", "offTurnMovement", {
-			name: game.i18n.localize("pf2e-dragruler.settings.offTurnMovement.name"),
-			hint: game.i18n.localize("pf2e-dragruler.settings.offTurnMovement.hint"),
-			scope: "world",
-			config: true,
-			type: Boolean,
-			default: false
-		})
+    }
 	return {A1: A1, A2: A2, A3: A3, A4: A4, usedActions:usedActions, type:movementType}
 };
