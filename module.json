@@ -1,28 +1,24 @@
 {
   "title": "PF2e Drag Ruler Integration",
-  "version": "2.1.8",
-  "description": "Integration of Drag Ruler module (https://github.com/manuelVo/foundryvtt-drag-ruler) for Pathfinder 2e with support for the 3 action enconomy, and conditions.",
+  "version": "3.0.1",
+  "description": "Integration of Drag Ruler module (https://github.com/manuelVo/foundryvtt-drag-ruler) for Pathfinder 2e.",
   "compatibility":{
-    "minimum": "10",
-    "verified": "10",
-    "maximum": "10"
+    "minimum": "11",
+    "verified": "11",
+    "maximum": "11"
   },
   "authors":[
   {
     "name":"Avery",
     "discord": "Avery#9136"
   }
-  ],
+],
+  "media": [{
+        "type": "setup",
+        "caption": "PF2E Drag Ruler",
+        "thumbnail": "/modules/pf2e-dragruler/thumbnail.webp"
+  }],
   "packs": [
-    {
-      "name": "movement-effects",
-      "label": "Movement Effects",
-      "path": "packs/movement-effects.db",
-      "type": "Item",
-      "private": false,
-      "system": "pf2e",
-      "flags": {}
-    },
     {
       "name": "movement-types",
       "label": "Movement Types",
@@ -44,8 +40,7 @@
   ],
   "socket": true,
   "manifest": "https://raw.githubusercontent.com/League-of-Foundry-Developers/pf2edragruler/main/module.json",
-
-  "download": "https://github.com/League-of-Foundry-Developers/pf2edragruler/archive/refs/tags/v2.1.8.zip",
+  "download": "https://github.com/League-of-Foundry-Developers/pf2edragruler/archive/refs/tags/v3.0.1.zip",
   "url": "https://github.com/League-of-Foundry-Developers/pf2edragruler",
   "id": "pf2e-dragruler",
   "relationships": {
@@ -60,7 +55,7 @@
 			{
 				"id": "drag-ruler",
 				"type": "module",
-				"manifest": "https://raw.githubusercontent.com/manuelVo/foundryvtt-drag-ruler/v1.13.0/module.json"
+				"manifest": "https://raw.githubusercontent.com/manuelVo/foundryvtt-drag-ruler/v1.13.5/module.json"
 			}
 		]
   }
